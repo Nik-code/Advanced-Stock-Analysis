@@ -1,0 +1,9 @@
+upper_band
+Open Price
+High Price
+lower_band
+WAP
+Lag_1_Close
+middle_band
+Lag_2_Close
+Low Price
