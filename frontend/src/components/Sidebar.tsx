@@ -4,16 +4,16 @@ import './Sidebar.css';
 
 const Sidebar: React.FC = () => {
   return (
-    <aside className={styles.sidebar}>
-      <div className={styles.logo}>
-        <span className={styles.icon}>⚡</span> GoStock
+    <aside className="sidebar">
+      <div className="logo">
+        <span className="icon">⚡</span> GoStock
       </div>
-      <div className={styles.investment}>
+      <div className="investment">
         <p>Total Investment</p>
         <h2>$5380,90</h2>
-        <span className={styles.percentage}>+18,10% ↑</span>
+        <span className="percentage">+18,10% ↑</span>
       </div>
-      <nav className={styles.nav}>
+      <nav className="nav">
         <ul>
           <li><Link to="/">Home</Link></li>
           <li><Link to="/dashboard">Dashboard</Link></li>

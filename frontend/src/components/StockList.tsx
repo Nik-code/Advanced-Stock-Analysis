@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getStocks } from '../services/mockDataService';
+import './StockList.css';
 
 interface Stock {
   symbol: string;
@@ -20,7 +21,7 @@ const StockList: React.FC = () => {
   }, []);
 
   return (
-    <div>
+    <div className="stockList">
       <h2>Stock List</h2>
       <ul>
         {stocks.map((stock) => (
