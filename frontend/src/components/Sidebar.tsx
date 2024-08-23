@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import styles from './Sidebar.module.css';
+import './Sidebar.css';
 
 const Sidebar: React.FC = () => {
   return (
