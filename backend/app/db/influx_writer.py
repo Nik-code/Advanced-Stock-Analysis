@@ -2,9 +2,15 @@ import os
 import pandas as pd
 import logging
 from influxdb_client import Point, WritePrecision
+from influxdb_client.client.write_api import SYNCHRONOUS  # Ensure this is imported
 from influx_client import get_influxdb_client
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
+
+# Script Purpose:
+# This script processes stock CSV files, calculates technical indicators (including RSI),
+# and ingests the data into an InfluxDB instance. It handles multiple CSV files, processes
+# them in batches, and optionally runs the processing in parallel for faster execution.
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -12,6 +18,16 @@ logger = logging.getLogger(__name__)
 
 bucket = "stock_data"
 client = get_influxdb_client()
+
+
+def calculate_rsi(data, window=14):
+    """Calculates the Relative Strength Index (RSI) with a default 14-day window."""
+    delta = data.diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
+    rs = gain / loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
 
 
 def read_and_process_csv(file_path):
