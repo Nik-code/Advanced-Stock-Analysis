@@ -32,8 +32,11 @@ async def fetch_and_process_data():
     try:
         logger.info("Fetching BSE data...")
         raw_data = await fetch_multiple_bse_stocks(scrip_codes)
-        processed_data = process_multiple_bse_stocks(raw_data)
+        if not raw_data:
+            logger.warning("No data fetched from BSE")
+            return []
 
+        processed_data = process_multiple_bse_stocks(raw_data)
         if len(processed_data) < 2:
             logger.warning("Not enough data to train the model or make predictions.")
             return processed_data
@@ -50,7 +53,7 @@ async def fetch_and_process_data():
         return processed_data
     except Exception as e:
         logger.error(f"Error in fetch_and_process_data: {str(e)}")
-        raise
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.on_event("startup")
