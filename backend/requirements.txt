@@ -7,3 +7,6 @@ python-dotenv
 motor
 apscheduler
 bsedata
+pytest
+httpx
+scikit-learn
