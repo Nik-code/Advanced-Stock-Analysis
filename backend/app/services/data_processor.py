@@ -1,6 +1,21 @@
 import pandas as pd
 import numpy as np
 from typing import Dict, Any, List
+import math
+
+
+def is_json_serializable(x):
+    try:
+        json.dumps(x)
+        return True
+    except (TypeError, OverflowError):
+        return False
+
+def sanitize_value(value):
+    if isinstance(value, (int, float)):
+        if not math.isfinite(value):
+            return None
+    return value if is_json_serializable(value) else str(value)
 
 
 def calculate_rsi(data: pd.Series, window: int = 14) -> pd.Series:
@@ -43,9 +58,14 @@ def process_multiple_bse_stocks(raw_data: Dict[str, Dict[str, Any]]) -> List[Dic
 
         processed_stock = df.to_dict(orient='records')[0]
         processed_stock['scrip_code'] = scrip_code
+
+        # Sanitize values
+        processed_stock = {k: sanitize_value(v) for k, v in processed_stock.items()}
+
         processed_data.append(processed_stock)
 
     return processed_data
+
 
 def process_top_gainers_losers(raw_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return [

@@ -23,6 +23,9 @@ def test_get_stocks():
                 assert "scrip_code" in stock
                 assert "currentValue" in stock
                 assert "predicted_price" in stock
+                # Check that values are either None or the correct type
+                assert stock["currentValue"] is None or isinstance(stock["currentValue"], (int, float))
+                assert stock["predicted_price"] is None or isinstance(stock["predicted_price"], (int, float, str))
     else:
         assert response.json() == {"detail": "No stock data available"}
 

@@ -43,7 +43,8 @@ async def fetch_and_process_data():
             predictor.train(processed_data)
 
         for stock in processed_data:
-            stock['predicted_price'] = predictor.predict(stock)
+            prediction = predictor.predict(stock)
+            stock['predicted_price'] = prediction if prediction is not None else 'Unable to predict'
 
         logger.info("Data processed and predictions made successfully")
         return processed_data
