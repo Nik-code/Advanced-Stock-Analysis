@@ -11,3 +11,4 @@ pytest
 httpx
 scikit-learn
 aiofiles
+yfinance
