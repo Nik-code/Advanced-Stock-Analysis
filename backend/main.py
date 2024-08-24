@@ -2,9 +2,11 @@ from fastapi import FastAPI, HTTPException
 from app.services.data_fetcher import fetch_multiple_bse_stocks
 from app.services.data_processor import process_multiple_bse_stocks
 from app.services.ml_predictions import StockPredictor
+from app.services.data_collection import collect_and_store_data
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
 import logging
+import os
 
 load_dotenv()
 
@@ -16,11 +18,20 @@ app = FastAPI()
 scheduler = AsyncIOScheduler()
 predictor = StockPredictor()
 
+# List of scrip codes to collect data for
+scrip_codes = ["500325", "532540", "500180"]  # Example: Reliance, TCS, HDFC Bank
+
+
+async def collect_historical_data():
+    logger.info("Collecting historical data...")
+    await collect_and_store_data(scrip_codes)
+    logger.info("Historical data collection completed")
+
 
 async def fetch_and_process_data():
     try:
         logger.info("Fetching BSE data...")
-        raw_data = await fetch_multiple_bse_stocks()
+        raw_data = await fetch_multiple_bse_stocks(scrip_codes)
         processed_data = process_multiple_bse_stocks(raw_data)
 
         if len(processed_data) < 2:
@@ -41,12 +52,11 @@ async def fetch_and_process_data():
         raise
 
 
-scheduler.add_job(fetch_and_process_data, 'interval', minutes=5)
-
-
 @app.on_event("startup")
 async def startup_event():
     logger.info("Starting up the application...")
+    # Collect historical data on startup
+    await collect_historical_data()
     scheduler.start()
 
 

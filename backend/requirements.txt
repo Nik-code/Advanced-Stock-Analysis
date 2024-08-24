@@ -10,3 +10,4 @@ bsedata
 pytest
 httpx
 scikit-learn
+aiofiles
