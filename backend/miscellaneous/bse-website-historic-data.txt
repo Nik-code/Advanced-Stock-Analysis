@@ -1,0 +1,109 @@
+### **BSE Website Historical Data**
+
+#### **Equity**
+- **Equity Market Turnover** (Overall and Group-wise)
+- **Equity Market Trading Statistics** (By Day, Month, Year)
+- **Daywise Trading Highlights** (Incl Advances, Declines, Stocks on Upper / Lower Circuits)
+- **Daywise Trading Highlights** (By Group and Period)
+- **Investor Categorywise Turnover** (Daily/Monthly/Yearly)
+- **Equity Market Capitalization** (By Group)
+- **Historical Stock Prices** (By Security & Period)
+- **Historical Stock Prices from 1988 to 1990** (By Security & Period)
+- **Historical High Low Prices** (By Security & Period)
+- **30 Most Active Securities of the Month**
+- **Historical Bhav Copy**
+- **Bulk Deals** (All Market/Security & Period)
+- **Block Deals** (All Market/Security & Period)
+- **Margin Trading** (By Date, Security & Period)
+- **Odd Lot Trading** (Historical)
+- **Illiquid Securities**
+- **Mode of Trading** (Monthly Report)
+- **Equity Market Deliverables** (Overall By Group and By Value and Volume)
+- **Gross Deliverables** (By Security & Period)
+- **Settlement Statistics**
+- **Settlement Calendar**
+- **Impact Cost**
+- **VaR Margin Groups**
+- **VaR & ELM Files** (Value at Risk & Extreme Loss Margin)
+- **Advances and Declines**
+- **Markets Last Week**
+
+#### **Indices**
+- **Indices Historical Prices**
+- **Indices Historical Prices & Ratios**
+- **Indices - Notices**
+
+#### **Public Issues, OFS, Buybacks**
+- **Public Issues**
+- **Delisting / Reverse Book Building**
+
+#### **Listing**
+- **New Listing, Delisting for the Year**
+- **Capital Listed on Exchange**
+- **Capital Offered for Listing** (By Instrument Types)
+
+#### **Equity Derivatives**
+- **Historical Contract - Wise data** (Instrument Type & Underlying Asset & Expiry Date &/or Strike Price & Period)
+- **Historical Product - Wise data**
+- **Day Wise Market Summary**
+- **Mode of Trading Data**
+- **Investor Categorywise Turnover**
+- **FII / FPI Trade Summary**
+- **Bhav Copy** (Derivatives/Derivatives Market Summary)
+- **Equity Derivatives Turnover** (By Day, Month, Year, Instrument)
+
+#### **Currency Derivatives**
+- **Currency Market Turnover**
+- **Day Wise Market Summary**
+- **Bhav Copy**
+
+#### **IRD (Interest Rate Derivatives)**
+- **IRD Market Turnover**
+- **Day Wise Market Summary**
+- **Bhav Copy**
+
+#### **Debt**
+- **Corporate Bond – OTC Trades**
+- **Interscheme Transfers by Mutual Funds**
+- **Broker Trade Reporting – Corporate Bonds**
+- **G - Sec Trade Reporting**
+- **Retail Trading in Corporate Bonds – F-Group**
+- **Retail Trading in Corporate Bonds – FC-Group**
+- **Retail Trading in Government Bonds – G-Group**
+- **Retail Trading in Government Bonds – GC-Group**
+- **Total Trade Reporting – Corporate Bonds**
+- **Central Trade Repository - Secondary Market**
+- **Central Trade Repository - Primary Market**
+- **RFQ Trades in Corporate Bonds**
+- **RFQ Trades in G-sec/SDL/T-Bills**
+- **Trade and Settlement Data on Corporate Bonds**
+- **BUY-BACK IN CORPORATE BONDS**
+- **Settlement Data For Corporate Bonds**
+
+#### **SLB (Securities Lending and Borrowing)**
+- **Trade Statistics**
+- **Price Volume Statistics**
+- **SLB Monthly Transaction Data**
+- **Bhav Copy**
+
+#### **ETF (Exchange-Traded Funds)**
+- **ETF Daywise Data**
+- **ETF Securitywise Data**
+
+#### **MF (Mutual Funds)**
+- **Market Summary**
+- **Mutual Fund Turnover**
+
+#### **Commodity Derivatives**
+- **Market Turnover**
+
+#### **FII (Foreign Institutional Investors)**
+- **FII Turnover**
+
+#### **Membership**
+- **Membership Type**
+
+#### **Registered Investors**
+- **State wise Registered Investors**
+
+---
