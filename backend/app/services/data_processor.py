@@ -1,4 +1,15 @@
-from typing import List, Dict, Any
+import pandas as pd
+import numpy as np
+from typing import Dict, Any, List
+
+
+def calculate_rsi(data: pd.Series, window: int = 14) -> pd.Series:
+    delta = data.diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
+    rs = gain / loss
+    return 100 - (100 / (1 + rs))
+
 
 def process_bse_data(raw_data: Dict[str, Any]) -> Dict[str, Any]:
     return {
@@ -14,8 +25,27 @@ def process_bse_data(raw_data: Dict[str, Any]) -> Dict[str, Any]:
         "updated_on": raw_data.get("updatedOn")
     }
 
+
 def process_multiple_bse_stocks(raw_data: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
-    return [process_bse_data(data) for data in raw_data.values()]
+    processed_data = []
+    for scrip_code, data in raw_data.items():
+        df = pd.DataFrame([data])
+
+        # Convert relevant columns to numeric
+        numeric_columns = ['currentValue', 'previousClose', 'dayHigh', 'dayLow', 'totalTradedQuantity']
+        for col in numeric_columns:
+            df[col] = pd.to_numeric(df[col].replace(',', ''), errors='coerce')
+
+        # Calculate additional metrics
+        df['daily_return'] = (df['currentValue'] - df['previousClose']) / df['previousClose']
+        df['volatility'] = (df['dayHigh'] - df['dayLow']) / df['previousClose']
+        df['rsi'] = calculate_rsi(df['currentValue'])
+
+        processed_stock = df.to_dict(orient='records')[0]
+        processed_stock['scrip_code'] = scrip_code
+        processed_data.append(processed_stock)
+
+    return processed_data
 
 def process_top_gainers_losers(raw_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return [
