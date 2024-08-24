@@ -1,13 +1,9 @@
 from fastapi import FastAPI, HTTPException
-from app.services.data_fetcher import fetch_multiple_bse_stocks
-from app.services.data_processor import process_multiple_bse_stocks
-from app.services.ml_predictions import StockPredictor
-from app.services.data_collection import collect_and_store_data
+from app.services.data_collection import fetch_historical_data
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
 import logging
 import os
-import asyncio
 
 load_dotenv()
 
@@ -17,77 +13,30 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 scheduler = AsyncIOScheduler()
-predictor = StockPredictor()
-
-# List of scrip codes to collect data for
-scrip_codes = ["500325", "532540", "500180"]  # Example: Reliance, TCS, HDFC Bank
-
-
-@app.on_event("startup")
-async def startup_event():
-    logger.info("Starting up the application...")
-    asyncio.create_task(collect_historical_data())
-    scheduler.start()
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("Shutting down the application...")
-    scheduler.shutdown()
-
 
 @app.get("/")
 async def root():
     return {"message": "BSE Stock Analysis API is running"}
 
 
-@app.get("/api/stocks")
-async def get_stocks():
+@app.get("/api/historical/{code}")
+async def get_historical_data(code: str, days: int = 365):
+    """
+    Fetch historical data for a given stock code.
+    :param code: Stock code (ticker symbol)
+    :param days: Number of days for which to fetch historical data
+    :return: Historical stock data
+    """
     try:
-        data = await fetch_and_process_data()
-        if not data:
-            raise HTTPException(status_code=404, detail="No stock data available")
-        return data
+        data = await fetch_historical_data(code, days)
+        if data is None or data.empty:
+            raise HTTPException(status_code=404, detail=f"No data found for stock code {code}")
+        return data.to_dict(orient='records')
     except Exception as e:
-        logger.error(f"Error in get_stocks endpoint: {str(e)}")
+        logger.error(f"Error fetching historical data for {code}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
-
-
-async def fetch_and_process_data():
-    try:
-        logger.info("Fetching BSE data...")
-        raw_data = await fetch_multiple_bse_stocks(scrip_codes)
-        if not raw_data:
-            logger.warning("No data fetched from BSE")
-            return []
-
-        processed_data = process_multiple_bse_stocks(raw_data)
-        if len(processed_data) < 2:
-            logger.warning("Not enough data to train the model or make predictions.")
-            return processed_data
-
-        if not predictor.is_trained:
-            logger.info("Training the model...")
-            predictor.train(processed_data)
-
-        for stock in processed_data:
-            prediction = predictor.predict(stock)
-            stock['predicted_price'] = prediction if prediction is not None else 'Unable to predict'
-
-        logger.info("Data processed and predictions made successfully")
-        return processed_data
-    except Exception as e:
-        logger.error(f"Error in fetch_and_process_data: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-async def collect_historical_data():
-    logger.info("Collecting historical data...")
-    await collect_and_store_data(scrip_codes)
-    logger.info("Historical data collection completed")
 
 
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=8000)
