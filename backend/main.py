@@ -7,6 +7,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
 import logging
 import os
+import asyncio
 
 load_dotenv()
 
@@ -22,10 +23,34 @@ predictor = StockPredictor()
 scrip_codes = ["500325", "532540", "500180"]  # Example: Reliance, TCS, HDFC Bank
 
 
-async def collect_historical_data():
-    logger.info("Collecting historical data...")
-    await collect_and_store_data(scrip_codes)
-    logger.info("Historical data collection completed")
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Starting up the application...")
+    asyncio.create_task(collect_historical_data())
+    scheduler.start()
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    logger.info("Shutting down the application...")
+    scheduler.shutdown()
+
+
+@app.get("/")
+async def root():
+    return {"message": "BSE Stock Analysis API is running"}
+
+
+@app.get("/api/stocks")
+async def get_stocks():
+    try:
+        data = await fetch_and_process_data()
+        if not data:
+            raise HTTPException(status_code=404, detail="No stock data available")
+        return data
+    except Exception as e:
+        logger.error(f"Error in get_stocks endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 async def fetch_and_process_data():
@@ -56,35 +81,10 @@ async def fetch_and_process_data():
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.on_event("startup")
-async def startup_event():
-    logger.info("Starting up the application...")
-    # Collect historical data on startup
-    await collect_historical_data()
-    scheduler.start()
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("Shutting down the application...")
-    scheduler.shutdown()
-
-
-@app.get("/")
-async def root():
-    return {"message": "BSE Stock Analysis API is running"}
-
-
-@app.get("/api/stocks")
-async def get_stocks():
-    try:
-        data = await fetch_and_process_data()
-        if not data:
-            raise HTTPException(status_code=404, detail="No stock data available")
-        return data
-    except Exception as e:
-        logger.error(f"Error in get_stocks endpoint: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+async def collect_historical_data():
+    logger.info("Collecting historical data...")
+    await collect_and_store_data(scrip_codes)
+    logger.info("Historical data collection completed")
 
 
 if __name__ == "__main__":
