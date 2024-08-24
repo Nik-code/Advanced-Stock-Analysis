@@ -38,17 +38,29 @@ def read_and_process_csv(file_path):
         # Read the CSV
         df = pd.read_csv(file_path)
 
+        # Rename columns to match expected names
+        df.rename(columns={
+            'Open Price': 'Open',
+            'High Price': 'High',
+            'Low Price': 'Low',
+            'Close Price': 'Close',
+            'No.of Shares': 'Volume'
+        }, inplace=True)
+
+        # Log the columns found in the CSV after renaming
+        logger.info(f"Columns found in {file_path}: {list(df.columns)}")
+
         # Validate essential columns
         required_columns = ['Date', 'Close', 'Open', 'High', 'Low', 'Volume']
         if not all(column in df.columns for column in required_columns):
             raise ValueError(f"Missing essential columns in {file_path}")
 
         # Convert columns to numeric values (handling commas)
-        df['Close'] = pd.to_numeric(df['Close'].str.replace(',', ''), errors='coerce')
-        df['Open'] = pd.to_numeric(df['Open'].str.replace(',', ''), errors='coerce')
-        df['High'] = pd.to_numeric(df['High'].str.replace(',', ''), errors='coerce')
-        df['Low'] = pd.to_numeric(df['Low'].str.replace(',', ''), errors='coerce')
-        df['Volume'] = pd.to_numeric(df['Volume'].str.replace(',', ''), errors='coerce')
+        df['Close'] = pd.to_numeric(df['Close'], errors='coerce')
+        df['Open'] = pd.to_numeric(df['Open'], errors='coerce')
+        df['High'] = pd.to_numeric(df['High'], errors='coerce')
+        df['Low'] = pd.to_numeric(df['Low'], errors='coerce')
+        df['Volume'] = pd.to_numeric(df['Volume'], errors='coerce')
 
         # Convert 'Date' to datetime
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
@@ -73,13 +85,13 @@ def read_and_process_csv(file_path):
         return None
 
 
-def write_stock_data_to_influxdb(df, symbol):
+def write_stock_data_to_influxdb(df, symbol, batch_size=100):
     try:
         # Batch processing
         write_api = client.write_api(write_options=SYNCHRONOUS)
         points = []
 
-        for _, row in df.iterrows():
+        for i, row in df.iterrows():
             point = (
                 Point("stock_data")
                 .tag("symbol", symbol)
@@ -96,16 +108,22 @@ def write_stock_data_to_influxdb(df, symbol):
             )
             points.append(point)
 
-        # Write in batches
-        write_api.write(bucket=bucket, org="my_org", record=points)
-        logger.info(f"Data for {symbol} written to InfluxDB.")
+            # Write in batches of 'batch_size'
+            if len(points) >= batch_size:
+                write_api.write(bucket=bucket, org="my_org", record=points)
+                points.clear()  # Clear the list after writing the batch
 
+        # Write any remaining points
+        if points:
+            write_api.write(bucket=bucket, org="my_org", record=points)
+
+        logger.info(f"Data for {symbol} written to InfluxDB.")
     except Exception as e:
         logger.error(f"Error writing data for {symbol} to InfluxDB: {str(e)}")
 
 
 def process_all_csv_files():
-    data_folder = '../data/'
+    data_folder = os.path.join(os.path.dirname(__file__), '../../data/')
 
     # Use a progress bar
     csv_files = [f for f in os.listdir(data_folder) if f.endswith('.csv')]
@@ -120,11 +138,11 @@ def process_all_csv_files():
 
 
 def process_files_in_parallel():
-    data_folder = '../data/'
+    data_folder = os.path.join(os.path.dirname(__file__), '../../data/')
     csv_files = [os.path.join(data_folder, f) for f in os.listdir(data_folder) if f.endswith('.csv')]
 
-    # Use multiprocessing to process multiple CSV files in parallel
-    with ProcessPoolExecutor() as executor:
+    # Limit the number of concurrent processes
+    with ProcessPoolExecutor(max_workers=8) as executor:  # Adjust based on your CPU and system load
         list(tqdm(executor.map(process_csv_file, csv_files), total=len(csv_files)))
 
 
@@ -137,5 +155,5 @@ def process_csv_file(file_path):
 
 if __name__ == "__main__":
     # Uncomment either of these based on your preference
-    process_all_csv_files()  # Single-threaded
-    # process_files_in_parallel()  # Parallel processing
+    # process_all_csv_files()  # Single-threaded
+    process_files_in_parallel()  # Parallel processing
