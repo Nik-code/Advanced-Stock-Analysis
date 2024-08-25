@@ -1,6 +1,9 @@
-from fastapi import APIRouter, HTTPException
 from ..db.influx_client import get_influxdb_client
+from fastapi import APIRouter, HTTPException
+from ..services.zerodha_service import ZerodhaService
 
+# ZerodhaService instance to fetch live stock data
+zerodha_service = ZerodhaService()
 
 router = APIRouter()
 
@@ -12,7 +15,7 @@ async def get_stock_data(symbol: str):
 
         query = f'''
         from(bucket: "stock_data")
-          |> range(start: -30d)
+          |> range(start: -730d)
           |> filter(fn: (r) => r._measurement == "stock_data" and r.symbol == "{symbol}")
           |> keep(columns: ["_time", "_value", "_field", "symbol"])
         '''
@@ -32,3 +35,20 @@ async def get_stock_data(symbol: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/stocks/{symbol}/live")
+async def get_live_stock_data(symbol: str):
+    try:
+        # Fetch live data for the stock symbol using Zerodha's API
+        live_data = zerodha_service.get_quote(f"BSE:{symbol}")
+
+        # Check if data is returned
+        if not live_data or f"BSE:{symbol}" not in live_data:
+            raise HTTPException(status_code=404, detail=f"No live data found for stock symbol {symbol}")
+
+        # Extract and return the relevant data
+        return live_data[f"BSE:{symbol}"]
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching live data: {str(e)}")
