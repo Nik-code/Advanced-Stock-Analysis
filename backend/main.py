@@ -20,6 +20,17 @@ zerodha_service = ZerodhaService()
 async def root():
     return {"message": "BSE Stock Analysis API is running"}
 
+@app.get("/api/quote")
+async def get_quote(instruments: str):
+    try:
+        quote_data = zerodha_service.get_quote(instruments)
+        if quote_data is None:
+            raise HTTPException(status_code=404, detail="Quote not found")
+        return quote_data
+    except Exception as e:
+        logger.error(f"Error fetching quote for {instruments}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error fetching quote")
+
 @app.get("/api/historical/{code}")
 async def get_historical_data(code: str, days: int = 365):
     try:
