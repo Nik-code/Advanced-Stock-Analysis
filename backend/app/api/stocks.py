@@ -1,12 +1,34 @@
-from fastapi import APIRouter
-from ..services.data_fetcher import fetch_multiple_bse_stocks
-from ..services.data_processor import process_multiple_bse_stocks
+from fastapi import APIRouter, HTTPException
+from ..db.influx_client import get_influxdb_client
+
 
 router = APIRouter()
 
-@router.get("/")
-async def get_stocks():
-    scrip_codes = ["500325", "532540", "500180"]  # Example: Reliance, TCS, HDFC Bank
-    raw_data = await fetch_multiple_bse_stocks(scrip_codes)
-    processed_data = process_multiple_bse_stocks(raw_data)
-    return processed_data
+@router.get("/stocks/{symbol}/data")
+async def get_stock_data(symbol: str):
+    try:
+        client = get_influxdb_client()
+        query_api = client.query_api()
+
+        query = f'''
+        from(bucket: "stock_data")
+          |> range(start: -30d)
+          |> filter(fn: (r) => r._measurement == "stock_data" and r.symbol == "{symbol}")
+          |> keep(columns: ["_time", "_value", "_field", "symbol"])
+        '''
+
+        result = query_api.query(org="my_org", query=query)
+
+        stock_data = []
+        for table in result:
+            for record in table.records:
+                stock_data.append({
+                    "time": record["_time"],
+                    "field": record["_field"],
+                    "value": record["_value"]
+                })
+
+        return {"symbol": symbol, "data": stock_data}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
