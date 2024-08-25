@@ -12,3 +12,5 @@ httpx
 scikit-learn
 aiofiles
 yfinance
+kiteconnect==4.1.0
+influxdb-client==1.36.0
