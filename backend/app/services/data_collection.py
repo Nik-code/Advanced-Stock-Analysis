@@ -3,6 +3,11 @@ import pandas as pd
 import os
 from datetime import datetime, timedelta
 import traceback
+import logging
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 zerodha_service = ZerodhaService()
 

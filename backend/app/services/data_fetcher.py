@@ -16,7 +16,7 @@ async def fetch_multiple_bse_stocks(scrip_codes: List[str] = None) -> Dict[str, 
         # You might need to implement a custom solution to get top companies
         raise NotImplementedError("Fetching top companies is not implemented with Zerodha API")
 
-    return zerodha_service.get_quote([f"BSE:{code}" for code in scrip_codes])
+    return zerodha_service.get_quote([f"{code}" for code in scrip_codes])
 
 async def fetch_top_gainers() -> List[Dict[str, Any]]:
     # This functionality is not directly available in Zerodha API
