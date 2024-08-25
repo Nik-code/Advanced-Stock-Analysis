@@ -3,6 +3,7 @@ from app.services.data_collection import fetch_historical_data
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
 import logging
+from app.services.zerodha_service import ZerodhaService
 import os
 
 load_dotenv()
@@ -35,6 +36,20 @@ async def get_historical_data(code: str, days: int = 365):
     except Exception as e:
         logger.error(f"Error fetching historical data for {code}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/login")
+async def login():
+    zerodha_service = ZerodhaService()
+    login_url = zerodha_service.get_login_url()
+    return {"login_url": login_url}
+
+
+@app.get("/api/callback")
+async def callback(request_token: str):
+    zerodha_service = ZerodhaService()
+    access_token = zerodha_service.generate_session(request_token)
+    return {"access_token": access_token}
 
 
 if __name__ == "__main__":
