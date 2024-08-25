@@ -48,6 +48,7 @@ class ZerodhaService:
         self.access_token = access_token
         self.kite.set_access_token(self.access_token)
 
+    @rate_limiter
     def get_quote(self, instruments):
         try:
             return self.kite.quote(instruments)
@@ -55,6 +56,7 @@ class ZerodhaService:
             logger.error(f"Error fetching quotes: {str(e)}")
             return None
 
+    @rate_limiter
     def get_historical_data(self, instrument_token, from_date, to_date, interval):
         try:
             return self.kite.historical_data(instrument_token, from_date, to_date, interval)
@@ -62,6 +64,7 @@ class ZerodhaService:
             logger.error(f"Error fetching historical data: {str(e)}")
             return None
 
+    @rate_limiter
     def get_holdings(self):
         try:
             return self.kite.holdings()
@@ -69,6 +72,7 @@ class ZerodhaService:
             logger.error(f"Error fetching holdings: {str(e)}")
             return None
 
+    @rate_limiter
     def get_positions(self):
         try:
             return self.kite.positions()
@@ -76,6 +80,7 @@ class ZerodhaService:
             logger.error(f"Error fetching positions: {str(e)}")
             return None
 
+    @rate_limiter
     def place_order(self, exchange, tradingsymbol, transaction_type, quantity, price=None, product=None, order_type=None):
         try:
             return self.kite.place_order(
@@ -92,6 +97,7 @@ class ZerodhaService:
             logger.error(f"Error placing order: {str(e)}")
             return None
 
+    @rate_limiter
     def get_orders(self):
         try:
             return self.kite.orders()
