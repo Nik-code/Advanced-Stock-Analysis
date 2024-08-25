@@ -2,11 +2,31 @@ from kiteconnect import KiteConnect
 import os
 from dotenv import load_dotenv
 import logging
+import time
 
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+class RateLimiter:
+    def __init__(self, max_calls, period):
+        self.max_calls = max_calls
+        self.period = period
+        self.calls = []
+
+    def __call__(self):
+        now = time.time()
+        self.calls = [call for call in self.calls if call > now - self.period]
+        if len(self.calls) >= self.max_calls:
+            sleep_time = self.calls[0] - (now - self.period)
+            time.sleep(max(0, sleep_time))
+        self.calls.append(time.time())
+
+
+rate_limiter = RateLimiter(max_calls=5, period=1)  # 5 calls per second
+
 
 class ZerodhaService:
     def __init__(self):
