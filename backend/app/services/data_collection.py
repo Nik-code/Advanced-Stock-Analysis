@@ -1,21 +1,26 @@
-import yfinance as yf
+from .zerodha_service import ZerodhaService
 import pandas as pd
 import os
 from datetime import datetime, timedelta
+
+zerodha_service = ZerodhaService()
 
 
 async def fetch_historical_data(scrip_code: str, days: int = 365):
     try:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
-        stock = yf.Ticker(scrip_code)
-        df = stock.history(start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'))
-
-        # If no data is returned, raise an error
-        if df.empty:
+        instrument_token = zerodha_service.kite.ltp([f"BSE:{scrip_code}"])[f"BSE:{scrip_code}"]["instrument_token"]
+        data = zerodha_service.get_historical_data(
+            instrument_token,
+            start_date.strftime('%Y-%m-%d'),
+            end_date.strftime('%Y-%m-%d'),
+            "day"
+        )
+        if not data:
             raise ValueError(f"No data found for {scrip_code}. It may be delisted.")
 
-        # Reset index
+        df = pd.DataFrame(data)
         df.reset_index(inplace=True)
         return df
     except ValueError as ve:
