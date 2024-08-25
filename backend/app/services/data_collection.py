@@ -2,6 +2,7 @@ from .zerodha_service import ZerodhaService
 import pandas as pd
 import os
 from datetime import datetime, timedelta
+import traceback
 
 zerodha_service = ZerodhaService()
 
@@ -23,11 +24,9 @@ async def fetch_historical_data(scrip_code: str, days: int = 365):
         df = pd.DataFrame(data)
         df.reset_index(inplace=True)
         return df
-    except ValueError as ve:
-        print(str(ve))
-        return None
     except Exception as e:
-        print(f"Error fetching historical data for {scrip_code}: {e}")
+        logger.error(f"Error fetching historical data for {scrip_code}: {str(e)}")
+        logger.error(traceback.format_exc())
         return None
 
 

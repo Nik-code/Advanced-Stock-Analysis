@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request
 from app.services.data_collection import fetch_historical_data
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv, set_key
 import logging
 from app.services.zerodha_service import ZerodhaService
 import os
@@ -24,12 +24,12 @@ async def root():
 async def get_historical_data(code: str, days: int = 365):
     try:
         data = await fetch_historical_data(code, days)
-        if data is None or data.empty:
+        if data is None:
             raise HTTPException(status_code=404, detail=f"No data found for stock code {code}")
         return data.to_dict(orient='records')
     except Exception as e:
         logger.error(f"Error fetching historical data for {code}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/login")
 async def login():
@@ -44,6 +44,10 @@ async def callback(request: Request):
         raise HTTPException(status_code=400, detail="No request token provided")
     try:
         access_token = zerodha_service.generate_session(request_token)
+        zerodha_service.set_access_token(access_token)
+        # Save the access token to .env file
+        dotenv_file = find_dotenv()
+        set_key(dotenv_file, "ZERODHA_ACCESS_TOKEN", access_token)
         return {"access_token": access_token}
     except Exception as e:
         logger.error(f"Error in callback: {str(e)}")

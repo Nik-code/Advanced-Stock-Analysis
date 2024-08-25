@@ -1,11 +1,11 @@
 from kiteconnect import KiteConnect
 import os
-from dotenv import load_dotenv
 import logging
 from functools import wraps
 import time
+import dotenv
 
-load_dotenv()
+dotenv.load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,8 +37,10 @@ class ZerodhaService:
     def __init__(self):
         self.api_key = os.getenv("ZERODHA_API_KEY")
         self.api_secret = os.getenv("ZERODHA_API_SECRET")
+        self.access_token = os.getenv("ZERODHA_ACCESS_TOKEN")
         self.kite = KiteConnect(api_key=self.api_key)
-        self.access_token = None
+        if self.access_token:
+            self.kite.set_access_token(self.access_token)
 
     @RateLimiter(max_calls=5, period=1)
     def get_quote(self, instruments):
@@ -60,6 +62,8 @@ class ZerodhaService:
     def set_access_token(self, access_token):
         self.access_token = access_token
         self.kite.set_access_token(self.access_token)
+        # Optionally, update the .env file
+        dotenv.set_key(dotenv.find_dotenv(), "ZERODHA_ACCESS_TOKEN", access_token)
 
 
     @rate_limiter
