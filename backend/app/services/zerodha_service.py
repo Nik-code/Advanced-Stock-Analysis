@@ -2,6 +2,7 @@ from kiteconnect import KiteConnect
 import os
 from dotenv import load_dotenv
 import logging
+from functools import wraps
 import time
 
 load_dotenv()
@@ -16,13 +17,17 @@ class RateLimiter:
         self.period = period
         self.calls = []
 
-    def __call__(self):
-        now = time.time()
-        self.calls = [call for call in self.calls if call > now - self.period]
-        if len(self.calls) >= self.max_calls:
-            sleep_time = self.calls[0] - (now - self.period)
-            time.sleep(max(0, sleep_time))
-        self.calls.append(time.time())
+    def __call__(self, func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            now = time.time()
+            self.calls = [call for call in self.calls if call > now - self.period]
+            if len(self.calls) >= self.max_calls:
+                sleep_time = self.calls[0] - (now - self.period)
+                time.sleep(max(0, sleep_time))
+            self.calls.append(time.time())
+            return func(*args, **kwargs)
+        return wrapper
 
 
 rate_limiter = RateLimiter(max_calls=5, period=1)  # 5 calls per second
@@ -34,6 +39,14 @@ class ZerodhaService:
         self.api_secret = os.getenv("ZERODHA_API_SECRET")
         self.kite = KiteConnect(api_key=self.api_key)
         self.access_token = None
+
+    @RateLimiter(max_calls=5, period=1)
+    def get_quote(self, instruments):
+        try:
+            return self.kite.quote(instruments)
+        except Exception as e:
+            logger.error(f"Error fetching quotes: {str(e)}")
+            return None
 
     def get_login_url(self):
         return self.kite.login_url()
@@ -48,13 +61,6 @@ class ZerodhaService:
         self.access_token = access_token
         self.kite.set_access_token(self.access_token)
 
-    @rate_limiter
-    def get_quote(self, instruments):
-        try:
-            return self.kite.quote(instruments)
-        except Exception as e:
-            logger.error(f"Error fetching quotes: {str(e)}")
-            return None
 
     @rate_limiter
     def get_historical_data(self, instrument_token, from_date, to_date, interval):
