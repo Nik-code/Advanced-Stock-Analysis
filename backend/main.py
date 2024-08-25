@@ -4,6 +4,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv, find_dotenv, set_key
 import logging
 from app.services.zerodha_service import ZerodhaService
+from app.api import stocks
 import os
 
 load_dotenv()
@@ -15,6 +16,8 @@ logger = logging.getLogger(__name__)
 app = FastAPI()  # This line is crucial
 scheduler = AsyncIOScheduler()
 zerodha_service = ZerodhaService()
+
+app.include_router(stocks.router, prefix="/api")
 
 @app.get("/")
 async def root():
