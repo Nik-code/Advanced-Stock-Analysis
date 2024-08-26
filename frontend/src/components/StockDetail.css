@@ -1,0 +1,23 @@
+.stockDetail {
+  padding: 20px;
+}
+
+.technicalIndicators {
+  margin-bottom: 20px;
+}
+
+.historicalData table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.historicalData th,
+.historicalData td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.historicalData th {
+  background-color: #f2f2f2;
+}
