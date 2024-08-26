@@ -16,7 +16,9 @@ async def fetch_historical_data(scrip_code: str, days: int = 365):
     try:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
-        instrument_token = zerodha_service.kite.ltp([f"BSE:{scrip_code}"])[f"BSE:{scrip_code}"]["instrument_token"]
+        instrument_token = zerodha_service.get_instrument_token("BSE", scrip_code)
+        if not instrument_token:
+            raise ValueError(f"No instrument token found for {scrip_code}")
         data = zerodha_service.get_historical_data(
             instrument_token,
             start_date.strftime('%Y-%m-%d'),
