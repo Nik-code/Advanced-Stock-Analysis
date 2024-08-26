@@ -8,6 +8,7 @@ data/
 docs/
 .DS_Store
 frontend/repopacks
+frontend/node_modules/
 
 
 # C extensions
