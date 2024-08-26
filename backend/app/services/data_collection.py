@@ -16,20 +16,28 @@ async def fetch_historical_data(scrip_code: str, days: int = 365):
     try:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
-        instrument_token = zerodha_service.get_instrument_token("BSE", scrip_code)
-        if not instrument_token:
-            raise ValueError(f"No instrument token found for {scrip_code}")
-        data = zerodha_service.get_historical_data(
+        
+        # First, get the instrument token
+        instruments = zerodha_service.kite.instruments("BSE")
+        instrument = next((i for i in instruments if i['tradingsymbol'] == scrip_code), None)
+        
+        if not instrument:
+            raise ValueError(f"No instrument found for {scrip_code}")
+        
+        instrument_token = instrument['instrument_token']
+        
+        # Now fetch the historical data
+        data = zerodha_service.kite.historical_data(
             instrument_token,
-            start_date.strftime('%Y-%m-%d'),
-            end_date.strftime('%Y-%m-%d'),
+            start_date,
+            end_date,
             "day"
         )
+        
         if not data:
             raise ValueError(f"No data found for {scrip_code}. It may be delisted.")
 
         df = pd.DataFrame(data)
-        df.reset_index(inplace=True)
         return df
     except Exception as e:
         logger.error(f"Error fetching historical data for {scrip_code}: {str(e)}")
