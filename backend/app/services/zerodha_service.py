@@ -27,6 +27,7 @@ class RateLimiter:
                 time.sleep(max(0, sleep_time))
             self.calls.append(time.time())
             return func(*args, **kwargs)
+
         return wrapper
 
 
@@ -65,11 +66,34 @@ class ZerodhaService:
         # Optionally, update the .env file
         dotenv.set_key(dotenv.find_dotenv(), "ZERODHA_ACCESS_TOKEN", access_token)
 
-
     @rate_limiter
-    def get_historical_data(self, instrument_token, from_date, to_date, interval):
+    def get_historical_data(self, instrument_token, from_date, to_date, interval="day", continuous=0, oi=0):
+        """
+        Fetch historical data for the given instrument.
+
+        :param instrument_token: The token of the instrument (e.g., 738561 for RELIANCE)
+        :param from_date: The start date in yyyy-mm-dd hh:mm:ss format
+        :param to_date: The end date in yyyy-mm-dd hh:mm:ss format
+        :param interval: The interval of the candle (e.g., minute, day, etc.)
+        :param continuous: Pass 1 for continuous data (for futures/options)
+        :param oi: Pass 1 to get Open Interest (OI) data
+        :return: List of candles or None if an error occurred
+        """
         try:
-            return self.kite.historical_data(instrument_token, from_date, to_date, interval)
+            logger.info(f"Fetching historical data for token {instrument_token} from {from_date} to {to_date}")
+
+            # Fetch historical data using KiteConnect API
+            data = self.kite.historical_data(
+                instrument_token=instrument_token,
+                from_date=from_date,
+                to_date=to_date,
+                interval=interval,
+                continuous=continuous,
+                oi=oi
+            )
+
+            logger.info(f"Fetched {len(data)} candles")
+            return data
         except Exception as e:
             logger.error(f"Error fetching historical data: {str(e)}")
             return None
@@ -91,7 +115,8 @@ class ZerodhaService:
             return None
 
     @rate_limiter
-    def place_order(self, exchange, tradingsymbol, transaction_type, quantity, price=None, product=None, order_type=None):
+    def place_order(self, exchange, tradingsymbol, transaction_type, quantity, price=None, product=None,
+                    order_type=None):
         try:
             return self.kite.place_order(
                 variety=self.kite.VARIETY_REGULAR,

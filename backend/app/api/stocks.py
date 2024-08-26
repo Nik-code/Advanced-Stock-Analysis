@@ -2,10 +2,13 @@ from ..db.influx_client import get_influxdb_client
 from fastapi import APIRouter, HTTPException
 from ..services.zerodha_service import ZerodhaService
 
+
 # ZerodhaService instance to fetch live stock data
 zerodha_service = ZerodhaService()
 
+
 router = APIRouter()
+
 
 @router.get("/stocks/{symbol}/data")
 async def get_stock_data(symbol: str):
