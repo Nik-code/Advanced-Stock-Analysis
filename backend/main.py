@@ -113,6 +113,54 @@ async def get_realtime_data(symbol: str):
         logger.error(f"Error fetching real-time data for {symbol}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/market/overview")
+async def get_market_overview(limit: int = 10):
+    try:
+        # This is a placeholder. You should replace it with actual top stocks from your data
+        top_stocks = ["500325", "500112", "500209", "500247", "500696", "500180", "532454", "500875", "500510", "500114"][:limit]
+        
+        overview_data = []
+        for symbol in top_stocks:
+            quote = zerodha_service.get_quote(f"BSE:{symbol}")
+            if quote and f"BSE:{symbol}" in quote:
+                stock_data = quote[f"BSE:{symbol}"]
+                overview_data.append({
+                    "symbol": symbol,
+                    "last_price": stock_data.get("last_price"),
+                    "change": stock_data.get("change"),
+                    "change_percent": stock_data.get("change_percent")
+                })
+        
+        return overview_data
+    except Exception as e:
+        logger.error(f"Error fetching market overview: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/stocks/compare")
+async def compare_stocks(symbols: str, days: int = 365):
+    try:
+        symbol_list = symbols.split(",")
+        if len(symbol_list) < 2:
+            raise HTTPException(status_code=400, detail="Please provide at least two stock symbols for comparison")
+        
+        comparison_data = {}
+        for symbol in symbol_list:
+            data = await fetch_historical_data(symbol, days)
+            if data is None:
+                raise HTTPException(status_code=404, detail=f"No data found for stock symbol {symbol}")
+            
+            close_prices = data['Close']
+            comparison_data[symbol] = {
+                "prices": close_prices.tolist(),
+                "return": ((close_prices.iloc[-1] / close_prices.iloc[0]) - 1) * 100,
+                "volatility": close_prices.pct_change().std() * (252 ** 0.5) * 100  # Annualized volatility
+            }
+        
+        return comparison_data
+    except Exception as e:
+        logger.error(f"Error comparing stocks: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 def calculate_sma(data: pd.Series, window: int) -> pd.Series:
     return data.rolling(window=window).mean()
 
