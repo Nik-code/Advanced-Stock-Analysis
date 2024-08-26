@@ -37,6 +37,7 @@ async def fetch_historical_data(scrip_code: str, days: int = 365):
             return None
 
         df = pd.DataFrame(data)
+        logger.info(f"Columns in the dataframe: {df.columns}")
         logger.info(f"Successfully fetched {len(df)} data points for {scrip_code}")
         return df
     except Exception as e:
