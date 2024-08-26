@@ -89,11 +89,9 @@ async def get_technical_indicators(symbol: str, days: int = 365):
         close_prices = data['close']
         dates = data['date'].tolist()
 
-        def clean_infinite(arr):
-            return np.where(np.isfinite(arr), arr, None)
-
         def create_indicator_data(indicator_values):
-            return [{"date": date, "value": value} for date, value in zip(dates, clean_infinite(indicator_values))]
+            return [{"date": date, "value": value if pd.notnull(value) else None}
+                    for date, value in zip(dates, indicator_values)]
 
         indicators = {
             "SMA_20": create_indicator_data(calculate_sma(close_prices, 20)),
@@ -119,7 +117,22 @@ async def get_technical_indicators(symbol: str, days: int = 365):
         if 'high' in data.columns and 'low' in data.columns:
             indicators["ATR"] = create_indicator_data(calculate_atr(data['high'], data['low'], close_prices))
 
-        return indicators
+        metadata = {
+            "symbol": symbol,
+            "data_points": len(data),
+            "start_date": dates[0],
+            "end_date": dates[-1],
+            "parameters": {
+                "SMA_window": 20,
+                "EMA_window": 20,
+                "RSI_window": 14,
+                "MACD": {"fast": 12, "slow": 26, "signal": 9},
+                "Bollinger_Bands": {"window": 20, "num_std": 2},
+                "ATR_window": 14
+            }
+        }
+
+        return {"metadata": metadata, "indicators": indicators}
     except Exception as e:
         logger.error(f"Error calculating technical indicators for {symbol}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
