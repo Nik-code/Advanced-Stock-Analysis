@@ -33,7 +33,9 @@ const Dashboard: React.FC = () => {
   const [technicalIndicators, setTechnicalIndicators] = useState<any>(null);
   const [quoteData, setQuoteData] = useState<any>(null);
   const [timeFrame, setTimeFrame] = useState<string>('1year');
-  const chartRef = useRef<ChartJS | null>(null);
+
+  // UseRef with proper typing for chart.js
+  const chartRef = useRef<ChartJS<'line' | 'bar'> | null>(null);
 
   const handleSearch = async () => {
     if (stockCode) {
@@ -138,7 +140,7 @@ const Dashboard: React.FC = () => {
           <div className="chart-container">
             <h3>Historical Price Data</h3>
             <ReactChart
-              ref={chartRef as React.ForwardedRef<ChartJS>}
+              ref={chartRef}
               type='line'
               data={chartData}
               options={chartOptions}
