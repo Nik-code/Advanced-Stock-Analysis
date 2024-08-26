@@ -28,8 +28,8 @@ export const getQuote = async (instruments: string) => {
 };
 
 // Historical Data
-export const getHistoricalData = async (code: string, days: number = 365) => {
-  const response = await api.get(`/api/historical/${code}?days=${days}`);
+export const getHistoricalData = async (code: string, timeFrame: string = '1year') => {
+  const response = await api.get(`/api/historical/${code}?timeFrame=${timeFrame}`);
   return response.data;
 };
 

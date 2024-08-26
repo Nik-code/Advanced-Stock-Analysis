@@ -1,3 +1,4 @@
+// src/App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -8,6 +9,7 @@ import StockFund from './pages/StockFund/StockFund';
 import Community from './pages/Community/Community';
 import Settings from './pages/Settings/Settings';
 import Contact from './pages/Contact/Contact';
+import StockDetail from './components/StockDetail';
 
 const App: React.FC = () => {
   return (
@@ -22,6 +24,7 @@ const App: React.FC = () => {
           <Route path="/community" element={<Community />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/stock/:symbol" element={<StockDetail />} />
         </Routes>
       </Layout>
     </Router>
