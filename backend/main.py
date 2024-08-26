@@ -6,6 +6,8 @@ import logging
 from app.services.zerodha_service import ZerodhaService
 from app.api import stocks
 import os
+import pandas as pd
+import numpy as np
 
 load_dotenv()
 
@@ -66,6 +68,37 @@ async def callback(request: Request):
     except Exception as e:
         logger.error(f"Error in callback: {str(e)}")
         raise HTTPException(status_code=500, detail="Error generating session")
+
+@app.get("/api/stocks/{symbol}/realtime")
+async def get_realtime_data(symbol: str):
+    try:
+        realtime_data = zerodha_service.get_quote(f"BSE:{symbol}")
+        if realtime_data is None or f"BSE:{symbol}" not in realtime_data:
+            raise HTTPException(status_code=404, detail=f"No real-time data found for stock symbol {symbol}")
+        return realtime_data[f"BSE:{symbol}"]
+    except Exception as e:
+        logger.error(f"Error fetching real-time data for {symbol}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+def calculate_sma(data: pd.Series, window: int) -> pd.Series:
+    return data.rolling(window=window).mean()
+
+def calculate_ema(data: pd.Series, window: int) -> pd.Series:
+    return data.ewm(span=window, adjust=False).mean()
+
+def calculate_rsi(data: pd.Series, window: int = 14) -> pd.Series:
+    delta = data.diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
+    rs = gain / loss
+    return 100 - (100 / (1 + rs))
+
+def calculate_macd(data: pd.Series, fast_period: int = 12, slow_period: int = 26, signal_period: int = 9) -> tuple:
+    ema_fast = calculate_ema(data, fast_period)
+    ema_slow = calculate_ema(data, slow_period)
+    macd_line = ema_fast - ema_slow
+    signal_line = calculate_ema(macd_line, signal_period)
+    return macd_line, signal_line
 
 if __name__ == "__main__":
     import uvicorn
