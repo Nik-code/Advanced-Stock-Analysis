@@ -105,10 +105,13 @@ async def get_technical_indicators(symbol: str, days: int = 365):
 @app.get("/api/stocks/{symbol}/realtime")
 async def get_realtime_data(symbol: str):
     try:
-        realtime_data = zerodha_service.get_quote(f"BSE:{symbol}")
-        if realtime_data is None or f"BSE:{symbol}" not in realtime_data:
+        instrument_token = zerodha_service.get_instrument_token("BSE", symbol)
+        if not instrument_token:
+            raise HTTPException(status_code=404, detail=f"No instrument token found for stock symbol {symbol}")
+        realtime_data = zerodha_service.get_quote([instrument_token])
+        if realtime_data is None or str(instrument_token) not in realtime_data:
             raise HTTPException(status_code=404, detail=f"No real-time data found for stock symbol {symbol}")
-        return realtime_data[f"BSE:{symbol}"]
+        return realtime_data[str(instrument_token)]
     except Exception as e:
         logger.error(f"Error fetching real-time data for {symbol}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
