@@ -1,8 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { Line } from 'react-chartjs-2';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ChartData,
+  ChartOptions,
+} from 'chart.js';
+import { Chart as ReactChart } from 'react-chartjs-2';
 import { getHistoricalData, getTechnicalIndicators, getQuote } from '../../services/api';
 import './Dashboard.css';
-import { ChartData, ChartOptions } from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const Dashboard: React.FC = () => {
   const [stockCode, setStockCode] = useState<string>('');
@@ -10,6 +33,7 @@ const Dashboard: React.FC = () => {
   const [technicalIndicators, setTechnicalIndicators] = useState<any>(null);
   const [quoteData, setQuoteData] = useState<any>(null);
   const [timeFrame, setTimeFrame] = useState<string>('1year');
+  const chartRef = useRef<ChartJS | null>(null);
 
   const handleSearch = async () => {
     if (stockCode) {
@@ -28,7 +52,21 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const chartData: ChartData<'line'> = {
+  useEffect(() => {
+    return () => {
+      if (chartRef.current) {
+        chartRef.current.destroy();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (chartRef.current) {
+      chartRef.current.update();
+    }
+  }, [historicalData]);
+
+  const chartData: ChartData<'line' | 'bar', number[], string> = {
     labels: historicalData.map(data => data.date),
     datasets: [
       {
@@ -48,7 +86,7 @@ const Dashboard: React.FC = () => {
     ]
   };
 
-  const chartOptions = {
+  const chartOptions: ChartOptions<'line' | 'bar'> = {
     responsive: true,
     interaction: {
       mode: 'index' as const,
@@ -99,7 +137,12 @@ const Dashboard: React.FC = () => {
 
           <div className="chart-container">
             <h3>Historical Price Data</h3>
-            <Line data={chartData} options={chartOptions} />
+            <ReactChart
+              ref={chartRef as React.ForwardedRef<ChartJS>}
+              type='line'
+              data={chartData}
+              options={chartOptions}
+            />
           </div>
 
           <div className="technical-indicators">
