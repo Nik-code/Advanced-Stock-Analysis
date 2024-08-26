@@ -80,39 +80,44 @@ async def callback(request: Request):
 async def get_technical_indicators(symbol: str, days: int = 365):
     try:
         data = await fetch_historical_data(symbol, days)
-        if data is None:
+        if data is None or len(data) == 0:
             raise HTTPException(status_code=404, detail=f"No data found for stock symbol {symbol}")
 
         logger.info(f"Columns in the dataframe: {data.columns}")
+        logger.info(f"Number of data points: {len(data)}")
 
         close_prices = data['close']
+        dates = data['date'].tolist()
 
         def clean_infinite(arr):
             return np.where(np.isfinite(arr), arr, None)
 
+        def create_indicator_data(indicator_values):
+            return [{"date": date, "value": value} for date, value in zip(dates, clean_infinite(indicator_values))]
+
         indicators = {
-            "SMA_20": clean_infinite(calculate_sma(close_prices, 20)).tolist(),
-            "SMA_50": clean_infinite(calculate_sma(close_prices, 50)).tolist(),
-            "EMA_20": clean_infinite(calculate_ema(close_prices, 20)).tolist(),
-            "RSI": clean_infinite(calculate_rsi(close_prices)).tolist(),
+            "SMA_20": create_indicator_data(calculate_sma(close_prices, 20)),
+            "SMA_50": create_indicator_data(calculate_sma(close_prices, 50)),
+            "EMA_20": create_indicator_data(calculate_ema(close_prices, 20)),
+            "RSI": create_indicator_data(calculate_rsi(close_prices)),
         }
 
         macd_line, signal_line, histogram = calculate_macd(close_prices)
         indicators["MACD"] = {
-            "macd_line": clean_infinite(macd_line).tolist(),
-            "signal_line": clean_infinite(signal_line).tolist(),
-            "histogram": clean_infinite(histogram).tolist()
+            "macd_line": create_indicator_data(macd_line),
+            "signal_line": create_indicator_data(signal_line),
+            "histogram": create_indicator_data(histogram)
         }
 
         upper_band, middle_band, lower_band = calculate_bollinger_bands(close_prices)
         indicators["Bollinger_Bands"] = {
-            "upper": clean_infinite(upper_band).tolist(),
-            "middle": clean_infinite(middle_band).tolist(),
-            "lower": clean_infinite(lower_band).tolist()
+            "upper": create_indicator_data(upper_band),
+            "middle": create_indicator_data(middle_band),
+            "lower": create_indicator_data(lower_band)
         }
 
         if 'high' in data.columns and 'low' in data.columns:
-            indicators["ATR"] = clean_infinite(calculate_atr(data['high'], data['low'], close_prices)).tolist()
+            indicators["ATR"] = create_indicator_data(calculate_atr(data['high'], data['low'], close_prices))
 
         return indicators
     except Exception as e:
