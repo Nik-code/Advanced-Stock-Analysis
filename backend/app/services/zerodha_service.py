@@ -2,6 +2,7 @@ from kiteconnect import KiteConnect
 import os
 import logging
 from functools import wraps
+import traceback
 import time
 import dotenv
 
@@ -93,7 +94,6 @@ class ZerodhaService:
         try:
             logger.info(f"Fetching historical data for token {instrument_token} from {from_date} to {to_date}")
 
-            # Fetch historical data using KiteConnect API
             data = self.kite.historical_data(
                 instrument_token=instrument_token,
                 from_date=from_date,
@@ -103,10 +103,14 @@ class ZerodhaService:
                 oi=oi
             )
 
-            logger.info(f"Fetched {len(data)} candles")
+            if not data:
+                logger.warning(f"No historical data returned for token {instrument_token}")
+            else:
+                logger.info(f"Fetched {len(data)} candles")
             return data
         except Exception as e:
             logger.error(f"Error fetching historical data: {str(e)}")
+            logger.error(traceback.format_exc())
             return None
 
     @rate_limiter
