@@ -70,7 +70,7 @@ class ZerodhaService:
         try:
             instruments = self.kite.instruments(exchange)
             for instrument in instruments:
-                if instrument['tradingsymbol'] == symbol:
+                if instrument['tradingsymbol'] == symbol or instrument['name'].upper() == symbol.upper():
                     return instrument['instrument_token']
             return None
         except Exception as e:

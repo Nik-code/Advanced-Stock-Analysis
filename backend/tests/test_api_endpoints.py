@@ -1,36 +1,71 @@
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from app.services.zerodha_service import ZerodhaService
-from dotenv import load_dotenv
-import logging
+import requests
+import json
 
-load_dotenv()
+BASE_URL = "http://localhost:8000"
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+def test_root():
+    response = requests.get(f"{BASE_URL}/")
+    print("Root Endpoint:")
+    print(f"Status Code: {response.status_code}")
+    print(f"Response: {response.json()}")
+    print()
 
-def test_zerodha_connection():
-    zerodha_service = ZerodhaService()
-    
-    # Test login URL
-    login_url = zerodha_service.get_login_url()
-    logger.info(f"Login URL: {login_url}")
-    
-    # Test fetching a quote
-    symbol = "RELIANCE"  # You can change this to any stock symbol
-    quote = zerodha_service.get_quote(f"BSE:{symbol}")
-    if quote:
-        logger.info(f"Quote for {symbol}: {quote}")
+def test_historical_data(symbol="RELIANCE", days=30):
+    response = requests.get(f"{BASE_URL}/api/historical/{symbol}?days={days}")
+    print(f"Historical Data for {symbol}:")
+    print(f"Status Code: {response.status_code}")
+    if response.status_code == 200:
+        data = response.json()
+        print(f"Number of data points: {len(data)}")
+        print(f"First data point: {json.dumps(data[0], indent=2)}")
     else:
-        logger.error(f"Failed to fetch quote for {symbol}")
-    
-    # Test fetching instrument token
-    instrument_token = zerodha_service.get_instrument_token("BSE", symbol)
-    if instrument_token:
-        logger.info(f"Instrument token for {symbol}: {instrument_token}")
+        print(f"Error: {response.text}")
+    print()
+
+def test_technical_indicators(symbol="RELIANCE", days=30):
+    response = requests.get(f"{BASE_URL}/api/stocks/{symbol}/indicators?days={days}")
+    print(f"Technical Indicators for {symbol}:")
+    print(f"Status Code: {response.status_code}")
+    if response.status_code == 200:
+        data = response.json()
+        print(f"Indicators: {json.dumps(data, indent=2)}")
     else:
-        logger.error(f"Failed to fetch instrument token for {symbol}")
+        print(f"Error: {response.text}")
+    print()
+
+def test_realtime_data(symbol="RELIANCE"):
+    response = requests.get(f"{BASE_URL}/api/stocks/{symbol}/realtime")
+    print(f"Realtime Data for {symbol}:")
+    print(f"Status Code: {response.status_code}")
+    if response.status_code == 200:
+        data = response.json()
+        print(f"Realtime data: {json.dumps(data, indent=2)}")
+    else:
+        print(f"Error: {response.text}")
+    print()
+
+def test_market_overview(limit=5):
+    response = requests.get(f"{BASE_URL}/api/market/overview?limit={limit}")
+    print(f"Market Overview (Top {limit} stocks):")
+    print(f"Status Code: {response.status_code}")
+    if response.status_code == 200:
+        data = response.json()
+        print(f"Overview: {json.dumps(data, indent=2)}")
+    else:
+        print(f"Error: {response.text}")
+    print()
+
+def test_compare_stocks(symbols="RELIANCE,TCS", days=30):
+    response = requests.get(f"{BASE_URL}/api/stocks/compare?symbols={symbols}&days={days}")
+    print(f"Compare Stocks ({symbols}):")
+    print(f"Status Code: {response.status_code}")
+    if response.status_code == 200:
+        data = response.json()
+        print(f"Comparison data: {json.dumps(data, indent=2)}")
+    else:
+        print(f"Error: {response.text}")
+    print()
 
 if __name__ == "__main__":
-    test_zerodha_connection()
+    test_root()
+    test_historical_data()

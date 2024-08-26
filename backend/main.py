@@ -120,7 +120,7 @@ async def get_realtime_data(symbol: str):
 async def get_market_overview(limit: int = 10):
     try:
         # This is a placeholder. You should replace it with actual top stocks from your data
-        top_stocks = ["500325", "500112", "500209", "500247", "500696", "500180", "532454", "500875", "500510", "500114"][:limit]
+        top_stocks = ["RELIANCE", "TCS", "HDFCBANK", "INFY", "ICICIBANK", "HINDUNILVR", "HDFC", "SBIN", "BHARTIARTL", "ITC"][:limit]
         
         overview_data = []
         for symbol in top_stocks:
