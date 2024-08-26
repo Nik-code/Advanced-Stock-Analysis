@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from app.services.data_collection import fetch_historical_data
-from app.services.technical_indicators import calculate_sma, calculate_ema, calculate_rsi, calculate_macd
+from app.services.technical_indicators import calculate_sma, calculate_ema, calculate_rsi, calculate_macd, calculate_bollinger_bands, calculate_atr
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv, find_dotenv, set_key
 import logging
@@ -82,20 +82,38 @@ async def get_technical_indicators(symbol: str, days: int = 365):
         data = await fetch_historical_data(symbol, days)
         if data is None:
             raise HTTPException(status_code=404, detail=f"No data found for stock symbol {symbol}")
-        
-        close_prices = data['Close']
+
+        logger.info(f"Columns in the dataframe: {data.columns}")
+
+        close_prices = data['close']
+
+        def clean_infinite(arr):
+            return np.where(np.isfinite(arr), arr, None)
+
         indicators = {
-            "SMA_20": calculate_sma(close_prices, 20).tolist(),
-            "SMA_50": calculate_sma(close_prices, 50).tolist(),
-            "EMA_20": calculate_ema(close_prices, 20).tolist(),
-            "RSI": calculate_rsi(close_prices).tolist(),
+            "SMA_20": clean_infinite(calculate_sma(close_prices, 20)).tolist(),
+            "SMA_50": clean_infinite(calculate_sma(close_prices, 50)).tolist(),
+            "EMA_20": clean_infinite(calculate_ema(close_prices, 20)).tolist(),
+            "RSI": clean_infinite(calculate_rsi(close_prices)).tolist(),
         }
+
         macd_line, signal_line, histogram = calculate_macd(close_prices)
         indicators["MACD"] = {
-            "macd_line": macd_line.tolist(),
-            "signal_line": signal_line.tolist(),
-            "histogram": histogram.tolist()
+            "macd_line": clean_infinite(macd_line).tolist(),
+            "signal_line": clean_infinite(signal_line).tolist(),
+            "histogram": clean_infinite(histogram).tolist()
         }
+
+        upper_band, middle_band, lower_band = calculate_bollinger_bands(close_prices)
+        indicators["Bollinger_Bands"] = {
+            "upper": clean_infinite(upper_band).tolist(),
+            "middle": clean_infinite(middle_band).tolist(),
+            "lower": clean_infinite(lower_band).tolist()
+        }
+
+        if 'high' in data.columns and 'low' in data.columns:
+            indicators["ATR"] = clean_infinite(calculate_atr(data['high'], data['low'], close_prices)).tolist()
+
         return indicators
     except Exception as e:
         logger.error(f"Error calculating technical indicators for {symbol}: {str(e)}")
@@ -139,50 +157,39 @@ async def get_market_overview(limit: int = 10):
         logger.error(f"Error fetching market overview: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/stocks/compare")
 async def compare_stocks(symbols: str, days: int = 365):
     try:
         symbol_list = symbols.split(",")
         if len(symbol_list) < 2:
             raise HTTPException(status_code=400, detail="Please provide at least two stock symbols for comparison")
-        
+
         comparison_data = {}
         for symbol in symbol_list:
             data = await fetch_historical_data(symbol, days)
             if data is None:
                 raise HTTPException(status_code=404, detail=f"No data found for stock symbol {symbol}")
-            
-            close_prices = data['Close']
+
+            logger.info(f"Columns in the dataframe for {symbol}: {data.columns}")
+
+            # Check if 'close' column exists (case-insensitive)
+            close_column = next((col for col in data.columns if col.lower() == 'close'), None)
+            if not close_column:
+                raise ValueError(f"No 'close' column found for {symbol}. Available columns: {', '.join(data.columns)}")
+
+            close_prices = data[close_column]
             comparison_data[symbol] = {
                 "prices": close_prices.tolist(),
                 "return": ((close_prices.iloc[-1] / close_prices.iloc[0]) - 1) * 100,
                 "volatility": close_prices.pct_change().std() * (252 ** 0.5) * 100  # Annualized volatility
             }
-        
+
         return comparison_data
     except Exception as e:
         logger.error(f"Error comparing stocks: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-def calculate_sma(data: pd.Series, window: int) -> pd.Series:
-    return data.rolling(window=window).mean()
-
-def calculate_ema(data: pd.Series, window: int) -> pd.Series:
-    return data.ewm(span=window, adjust=False).mean()
-
-def calculate_rsi(data: pd.Series, window: int = 14) -> pd.Series:
-    delta = data.diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
-    rs = gain / loss
-    return 100 - (100 / (1 + rs))
-
-def calculate_macd(data: pd.Series, fast_period: int = 12, slow_period: int = 26, signal_period: int = 9) -> tuple:
-    ema_fast = calculate_ema(data, fast_period)
-    ema_slow = calculate_ema(data, slow_period)
-    macd_line = ema_fast - ema_slow
-    signal_line = calculate_ema(macd_line, signal_period)
-    return macd_line, signal_line
 
 if __name__ == "__main__":
     import uvicorn
