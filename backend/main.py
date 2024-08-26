@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from app.services.data_collection import fetch_historical_data
+from app.services.technical_indicators import calculate_sma, calculate_ema, calculate_rsi, calculate_macd
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv, find_dotenv, set_key
 import logging
@@ -21,9 +22,11 @@ zerodha_service = ZerodhaService()
 
 app.include_router(stocks.router, prefix="/api")
 
+
 @app.get("/")
 async def root():
     return {"message": "BSE Stock Analysis API is running"}
+
 
 @app.get("/api/quote")
 async def get_quote(instruments: str):
@@ -36,6 +39,7 @@ async def get_quote(instruments: str):
         logger.error(f"Error fetching quote for {instruments}: {str(e)}")
         raise HTTPException(status_code=500, detail="Error fetching quote")
 
+
 @app.get("/api/historical/{code}")
 async def get_historical_data(code: str, days: int = 365):
     try:
@@ -47,10 +51,12 @@ async def get_historical_data(code: str, days: int = 365):
         logger.error(f"Error fetching historical data for {code}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/login")
 async def login():
     login_url = zerodha_service.get_login_url()
     return {"login_url": login_url}
+
 
 @app.get("/api/callback")
 async def callback(request: Request):
@@ -68,6 +74,33 @@ async def callback(request: Request):
     except Exception as e:
         logger.error(f"Error in callback: {str(e)}")
         raise HTTPException(status_code=500, detail="Error generating session")
+
+
+@app.get("/api/stocks/{symbol}/indicators")
+async def get_technical_indicators(symbol: str, days: int = 365):
+    try:
+        data = await fetch_historical_data(symbol, days)
+        if data is None:
+            raise HTTPException(status_code=404, detail=f"No data found for stock symbol {symbol}")
+        
+        close_prices = data['Close']
+        indicators = {
+            "SMA_20": calculate_sma(close_prices, 20).tolist(),
+            "SMA_50": calculate_sma(close_prices, 50).tolist(),
+            "EMA_20": calculate_ema(close_prices, 20).tolist(),
+            "RSI": calculate_rsi(close_prices).tolist(),
+        }
+        macd_line, signal_line, histogram = calculate_macd(close_prices)
+        indicators["MACD"] = {
+            "macd_line": macd_line.tolist(),
+            "signal_line": signal_line.tolist(),
+            "histogram": histogram.tolist()
+        }
+        return indicators
+    except Exception as e:
+        logger.error(f"Error calculating technical indicators for {symbol}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
 
 @app.get("/api/stocks/{symbol}/realtime")
 async def get_realtime_data(symbol: str):
