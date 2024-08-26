@@ -11,13 +11,16 @@ def test_root():
     print()
 
 def test_historical_data(symbol="RELIANCE", days=30):
-    response = requests.get(f"{BASE_URL}/api/historical/{symbol}?days={days}")
+    response = requests.get(f"{BASE_URL}/api/stocks/{symbol}/data?days={days}")
     print(f"Historical Data for {symbol}:")
     print(f"Status Code: {response.status_code}")
     if response.status_code == 200:
         data = response.json()
-        print(f"Number of data points: {len(data)}")
-        print(f"First data point: {json.dumps(data[0], indent=2)}")
+        print(f"Number of data points: {len(data['data'])}")
+        if data['data']:
+            print(f"First data point: {json.dumps(data['data'][0], indent=2)}")
+        else:
+            print("No data points available")
     else:
         print(f"Error: {response.text}")
     print()
@@ -69,3 +72,7 @@ def test_compare_stocks(symbols="RELIANCE,TCS", days=30):
 if __name__ == "__main__":
     test_root()
     test_historical_data()
+    test_technical_indicators()
+    test_realtime_data()
+    test_market_overview()
+    test_compare_stocks()
