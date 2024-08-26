@@ -66,6 +66,17 @@ class ZerodhaService:
         # Optionally, update the .env file
         dotenv.set_key(dotenv.find_dotenv(), "ZERODHA_ACCESS_TOKEN", access_token)
 
+    def get_instrument_token(self, exchange, symbol):
+        try:
+            instruments = self.kite.instruments(exchange)
+            for instrument in instruments:
+                if instrument['tradingsymbol'] == symbol:
+                    return instrument['instrument_token']
+            return None
+        except Exception as e:
+            logger.error(f"Error fetching instrument token: {str(e)}")
+            return None
+
     @rate_limiter
     def get_historical_data(self, instrument_token, from_date, to_date, interval="day", continuous=0, oi=0):
         """
