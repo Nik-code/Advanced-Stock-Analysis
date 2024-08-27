@@ -15,6 +15,9 @@ import {
 import { Chart as ReactChart } from 'react-chartjs-2';
 import { getHistoricalData, getTechnicalIndicators, getQuote } from '../../services/api';
 import './Dashboard.css';
+import StockOverview from '../../components/StockOverview/StockOverview';
+import TechnicalAnalysis from '../../components/TechnicalAnalysis/TechnicalAnalysis';
+import VolumeAnalysis from '../../components/VolumeAnalysis/VolumeAnalysis';
 
 ChartJS.register(
   CategoryScale,
@@ -34,7 +37,6 @@ const Dashboard: React.FC = () => {
   const [quoteData, setQuoteData] = useState<any>(null);
   const [timeFrame, setTimeFrame] = useState<string>('1year');
 
-  // UseRef with proper typing for chart.js
   const chartRef = useRef<ChartJS<'line' | 'bar'> | null>(null);
 
   const handleSearch = async () => {
@@ -134,11 +136,10 @@ const Dashboard: React.FC = () => {
 
       {stockCode && quoteData && (
         <div className="stock-data">
-          <h2>{stockCode} - {quoteData?.last_price}</h2>
-          <p>Change: {quoteData?.change} ({quoteData?.change_percent}%)</p>
+          <StockOverview stockCode={stockCode} quoteData={quoteData} />
 
           <div className="chart-container">
-            <h3>Historical Price Data</h3>
+            <h3>Historical Price and Volume Data</h3>
             <ReactChart
               ref={chartRef}
               type='line'
@@ -147,15 +148,8 @@ const Dashboard: React.FC = () => {
             />
           </div>
 
-          <div className="technical-indicators">
-            <h3>Technical Indicators</h3>
-            <ul>
-              <li>SMA: {technicalIndicators?.indicators?.SMA_20[technicalIndicators.indicators.SMA_20.length - 1]?.value?.toFixed(2)}</li>
-              <li>EMA: {technicalIndicators?.indicators?.EMA_20[technicalIndicators.indicators.EMA_20.length - 1]?.value?.toFixed(2)}</li>
-              <li>RSI: {technicalIndicators?.indicators?.RSI[technicalIndicators.indicators.RSI.length - 1]?.value?.toFixed(2)}</li>
-              <li>MACD: {technicalIndicators?.indicators?.MACD?.macd_line[technicalIndicators.indicators.MACD.macd_line.length - 1]?.value?.toFixed(2)}</li>
-            </ul>
-          </div>
+          <TechnicalAnalysis technicalIndicators={technicalIndicators} />
+          <VolumeAnalysis historicalData={historicalData} />
         </div>
       )}
     </div>
