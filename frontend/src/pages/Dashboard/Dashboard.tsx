@@ -43,6 +43,26 @@ const Dashboard: React.FC = () => {
 
   const chartRef = useRef<ChartJS<'line' | 'bar'> | null>(null);
 
+  const chartData: ChartData<'line' | 'bar', number[], string> = {
+    labels: historicalData.map(data => data.date),
+    datasets: [
+      {
+        type: 'line' as const,
+        label: 'Close Price',
+        data: historicalData.map(data => data.close),
+        borderColor: 'rgb(75, 192, 192)',
+        yAxisID: 'y',
+      },
+      {
+        type: 'bar' as const,
+        label: 'Volume',
+        data: historicalData.map(data => data.volume),
+        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+        yAxisID: 'y1',
+      }
+    ]
+  };
+
   const handleSearch = async (newTimeFrame?: string) => {
     console.log('Searching for stock:', stockCode);
     if (stockCode) {
@@ -68,6 +88,10 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleSearchClick = () => {
+    handleSearch();
+  };
+
   useEffect(() => {
     document.body.classList.toggle('dark-mode', darkMode);
   }, [darkMode]);
@@ -86,25 +110,12 @@ const Dashboard: React.FC = () => {
     }
   }, [historicalData]);
 
-  const chartData: ChartData<'line' | 'bar', number[], string> = {
-    labels: historicalData.map(data => data.date),
-    datasets: [
-      {
-        type: 'line' as const,
-        label: 'Close Price',
-        data: historicalData.map(data => data.close),
-        borderColor: 'rgb(75, 192, 192)',
-        yAxisID: 'y',
-      },
-      {
-        type: 'bar' as const,
-        label: 'Volume',
-        data: historicalData.map(data => data.volume),
-        backgroundColor: 'rgba(53, 162, 235, 0.5)',
-        yAxisID: 'y1',
-      }
-    ]
-  };
+  useEffect(() => {
+    if (chartRef.current) {
+      chartRef.current.data = chartData;
+      chartRef.current.update();
+    }
+  }, [historicalData, chartData]);
 
   const chartOptions: ChartOptions<'line' | 'bar'> = {
     responsive: true,
@@ -147,7 +158,7 @@ const Dashboard: React.FC = () => {
               placeholder="Enter stock code (e.g., TCS)"
               className="stock-search"
             />
-            <button onClick={handleSearch} className="search-button">Search</button>
+            <button onClick={handleSearchClick} className="search-button">Search</button>
           </div>
           <div className="time-frame-selector">
             <button onClick={() => handleSearch('1month')}>1M</button>
