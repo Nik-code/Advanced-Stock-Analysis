@@ -43,12 +43,13 @@ const Dashboard: React.FC = () => {
 
   const chartRef = useRef<ChartJS<'line' | 'bar'> | null>(null);
 
-  const handleSearch = async () => {
+  const handleSearch = async (newTimeFrame?: string) => {
     console.log('Searching for stock:', stockCode);
     if (stockCode) {
       try {
+        const timeFrameToUse = newTimeFrame || timeFrame;
         const [historical, indicators, quote] = await Promise.all([
-          getHistoricalData(stockCode, timeFrame),
+          getHistoricalData(stockCode, timeFrameToUse),
           getTechnicalIndicators(stockCode),
           getQuote(`BSE:${stockCode}`)
         ]);
@@ -58,6 +59,9 @@ const Dashboard: React.FC = () => {
         setHistoricalData(historical);
         setTechnicalIndicators(indicators);
         setQuoteData(quote[`BSE:${stockCode}`]);
+        if (newTimeFrame) {
+          setTimeFrame(newTimeFrame);
+        }
       } catch (error) {
         console.error('Error fetching stock data:', error);
       }
@@ -146,10 +150,10 @@ const Dashboard: React.FC = () => {
             <button onClick={handleSearch} className="search-button">Search</button>
           </div>
           <div className="time-frame-selector">
-            <button onClick={() => setTimeFrame('1month')}>1M</button>
-            <button onClick={() => setTimeFrame('3months')}>3M</button>
-            <button onClick={() => setTimeFrame('1year')}>1Y</button>
-            <button onClick={() => setTimeFrame('5years')}>5Y</button>
+            <button onClick={() => handleSearch('1month')}>1M</button>
+            <button onClick={() => handleSearch('3months')}>3M</button>
+            <button onClick={() => handleSearch('1year')}>1Y</button>
+            <button onClick={() => handleSearch('5years')}>5Y</button>
           </div>
           <div className="watchlist">
             <h3>Watchlist</h3>
