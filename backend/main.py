@@ -51,9 +51,9 @@ async def get_quote(instruments: str):
 
 
 @app.get("/api/historical/{code}")
-async def get_historical_data(code: str, days: int = 365):
+async def get_historical_data(code: str, timeFrame: str = '1year'):
     try:
-        data = await fetch_historical_data(code, days)
+        data = await fetch_historical_data(code, timeFrame)
         if data is None:
             raise HTTPException(status_code=404, detail=f"No data found for stock code {code}")
         return data.to_dict(orient='records')
@@ -87,66 +87,43 @@ async def callback(request: Request):
 
 
 @app.get("/api/stocks/{symbol}/indicators")
-async def get_technical_indicators(symbol: str, days: int = 365):
+async def get_technical_indicators(symbol: str, timeFrame: str = '1year'):
     try:
-        data = await fetch_historical_data(symbol, days)
-        if data is None or len(data) == 0:
+        historical_data = await fetch_historical_data(symbol, timeFrame)
+        if historical_data is None:
             raise HTTPException(status_code=404, detail=f"No data found for stock symbol {symbol}")
 
-        logger.info(f"Columns in the dataframe: {data.columns}")
-        logger.info(f"Number of data points: {len(data)}")
+        logger.info(f"Columns in the dataframe: {historical_data.columns}")
+        logger.info(f"Number of data points: {len(historical_data)}")
 
-        close_prices = data['close']
-        dates = data['date'].tolist()
+        # Calculate technical indicators
+        sma_20 = calculate_sma(historical_data['close'], 20)
+        ema_50 = calculate_ema(historical_data['close'], 50)
+        rsi_14 = calculate_rsi(historical_data['close'], 14)
+        macd, signal, _ = calculate_macd(historical_data['close'])
+        upper, middle, lower = calculate_bollinger_bands(historical_data['close'])
+        atr = calculate_atr(historical_data['high'], historical_data['low'], historical_data['close'], 14)
 
-        def create_indicator_data(indicator_values):
-            return [{"date": date, "value": value if pd.notnull(value) else None}
-                    for date, value in zip(dates, indicator_values)]
+        def safe_float_list(arr):
+            return [float(x) if not np.isnan(x) and not np.isinf(x) else None for x in arr]
 
-        indicators = {
-            "SMA_20": create_indicator_data(calculate_sma(close_prices, 20)),
-            "SMA_50": create_indicator_data(calculate_sma(close_prices, 50)),
-            "EMA_20": create_indicator_data(calculate_ema(close_prices, 20)),
-            "RSI": create_indicator_data(calculate_rsi(close_prices)),
+        return {
+            "sma_20": safe_float_list(sma_20),
+            "ema_50": safe_float_list(ema_50),
+            "rsi_14": safe_float_list(rsi_14),
+            "macd": safe_float_list(macd),
+            "macd_signal": safe_float_list(signal),
+            "bollinger_upper": safe_float_list(upper),
+            "bollinger_middle": safe_float_list(middle),
+            "bollinger_lower": safe_float_list(lower),
+            "atr": safe_float_list(atr),
+            "dates": historical_data['date'].tolist(),
+            "close_prices": safe_float_list(historical_data['close'])
         }
-
-        macd_line, signal_line, histogram = calculate_macd(close_prices)
-        indicators["MACD"] = {
-            "macd_line": create_indicator_data(macd_line),
-            "signal_line": create_indicator_data(signal_line),
-            "histogram": create_indicator_data(histogram)
-        }
-
-        upper_band, middle_band, lower_band = calculate_bollinger_bands(close_prices)
-        indicators["Bollinger_Bands"] = {
-            "upper": create_indicator_data(upper_band),
-            "middle": create_indicator_data(middle_band),
-            "lower": create_indicator_data(lower_band)
-        }
-
-        if 'high' in data.columns and 'low' in data.columns:
-            indicators["ATR"] = create_indicator_data(calculate_atr(data['high'], data['low'], close_prices))
-
-        metadata = {
-            "symbol": symbol,
-            "data_points": len(data),
-            "start_date": dates[0],
-            "end_date": dates[-1],
-            "parameters": {
-                "SMA_window": 20,
-                "EMA_window": 20,
-                "RSI_window": 14,
-                "MACD": {"fast": 12, "slow": 26, "signal": 9},
-                "Bollinger_Bands": {"window": 20, "num_std": 2},
-                "ATR_window": 14
-            }
-        }
-
-        return {"metadata": metadata, "indicators": indicators}
     except Exception as e:
         logger.error(f"Error calculating technical indicators for {symbol}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 
 @app.get("/api/stocks/{symbol}/realtime")
 async def get_realtime_data(symbol: str):

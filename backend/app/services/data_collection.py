@@ -12,10 +12,20 @@ logger = logging.getLogger(__name__)
 zerodha_service = ZerodhaService()
 
 
-async def fetch_historical_data(scrip_code: str, days: int = 365):
+async def fetch_historical_data(scrip_code: str, time_frame: str = '1year'):
     try:
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
+        
+        if time_frame == '1month':
+            start_date = end_date - timedelta(days=30)
+        elif time_frame == '3months':
+            start_date = end_date - timedelta(days=90)
+        elif time_frame == '1year':
+            start_date = end_date - timedelta(days=365)
+        elif time_frame == '5years':
+            start_date = end_date - timedelta(days=1825)
+        else:
+            raise ValueError(f"Invalid time frame: {time_frame}")
         
         logger.info(f"Fetching instrument token for {scrip_code}")
         instrument_token = zerodha_service.get_instrument_token("BSE", scrip_code)
