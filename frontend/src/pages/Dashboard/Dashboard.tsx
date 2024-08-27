@@ -11,6 +11,7 @@ import {
   Legend,
   ChartData,
   ChartOptions,
+  TimeScale,
 } from 'chart.js';
 import { Chart as ReactChart } from 'react-chartjs-2';
 import { getHistoricalData, getTechnicalIndicators, getQuote } from '../../services/api';
@@ -27,7 +28,8 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  TimeScale
 );
 
 const Dashboard: React.FC = () => {

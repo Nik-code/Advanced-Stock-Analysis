@@ -2,8 +2,9 @@ import React from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, TimeScale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import './VolumeAnalysis.css';
 import { enUS } from 'date-fns/locale';
+import { ChartOptions } from 'chart.js';
+import './VolumeAnalysis.css';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, TimeScale);
 
@@ -23,13 +24,13 @@ const VolumeAnalysis: React.FC<VolumeAnalysisProps> = ({ historicalData }) => {
     ],
   };
 
-  const chartOptions = {
+  const chartOptions: ChartOptions<'bar'> = {
     responsive: true,
     scales: {
       x: {
-        type: 'time',
+        type: 'time' as const,
         time: {
-          unit: 'day',
+          unit: 'day' as const,
         },
         adapters: {
           date: {
