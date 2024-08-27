@@ -68,3 +68,18 @@ export const compareStocks = async (symbols: string[], days: number = 365) => {
   const response = await api.get(`/api/stocks/compare?symbols=${symbolsString}&days=${days}`);
   return response.data;
 };
+
+export const getMarketSentiment = async (symbol: string) => {
+  const response = await api.get(`/api/stocks/${symbol}/sentiment`);
+  return response.data;
+};
+
+export const getNewsArticles = async (symbol: string) => {
+  const response = await api.get(`/api/stocks/${symbol}/news`);
+  return response.data;
+};
+
+export const getPeerComparison = async (symbol: string) => {
+  const response = await api.get(`/api/stocks/${symbol}/peers`);
+  return response.data;
+};
