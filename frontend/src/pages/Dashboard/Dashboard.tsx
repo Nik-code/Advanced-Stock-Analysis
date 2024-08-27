@@ -40,6 +40,7 @@ const Dashboard: React.FC = () => {
   const chartRef = useRef<ChartJS<'line' | 'bar'> | null>(null);
 
   const handleSearch = async () => {
+    console.log('Searching for stock:', stockCode);
     if (stockCode) {
       try {
         const [historical, indicators, quote] = await Promise.all([
@@ -47,6 +48,9 @@ const Dashboard: React.FC = () => {
           getTechnicalIndicators(stockCode),
           getQuote(`BSE:${stockCode}`)
         ]);
+        console.log('Historical data:', historical);
+        console.log('Technical indicators:', indicators);
+        console.log('Quote data:', quote);
         setHistoricalData(historical);
         setTechnicalIndicators(indicators);
         setQuoteData(quote[`BSE:${stockCode}`]);
@@ -61,6 +65,7 @@ const Dashboard: React.FC = () => {
       if (chartRef.current) {
         chartRef.current.destroy();
       }
+      ChartJS.unregister(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, TimeScale);
     };
   }, []);
 
