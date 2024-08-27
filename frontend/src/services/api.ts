@@ -50,7 +50,6 @@ export const getTechnicalIndicators = async (symbol: string, days: number = 365)
   const response = await api.get(`/api/stocks/${symbol}/indicators?days=${days}`);
   return response.data;
 };
-
 // Real-time Data
 export const getRealtimeData = async (symbol: string) => {
   const response = await api.get(`/api/stocks/${symbol}/realtime`);
@@ -69,5 +68,3 @@ export const compareStocks = async (symbols: string[], days: number = 365) => {
   const response = await api.get(`/api/stocks/compare?symbols=${symbolsString}&days=${days}`);
   return response.data;
 };
-
-export default api;
