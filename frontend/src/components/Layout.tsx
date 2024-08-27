@@ -1,7 +1,7 @@
 import React from 'react';
+import { Box, Flex } from '@chakra-ui/react';
 import Sidebar from './Sidebar/Sidebar';
 import Header from './Header/Header';
-import './Layout.css';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,13 +9,15 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="layout">
+    <Flex h="100vh">
       <Sidebar />
-      <div className="mainContent">
+      <Flex flexDirection="column" flex={1}>
         <Header />
-        <main className="content">{children}</main>
-      </div>
-    </div>
+        <Box as="main" flex={1} p={4} overflowY="auto">
+          {children}
+        </Box>
+      </Flex>
+    </Flex>
   );
 };
 

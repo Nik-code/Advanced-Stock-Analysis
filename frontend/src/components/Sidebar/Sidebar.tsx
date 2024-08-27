@@ -1,31 +1,33 @@
 import React from 'react';
+import { Box, VStack, Icon, Tooltip } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
-import './Sidebar.css';
+import { FiHome, FiTrendingUp, FiStar, FiFileText, FiSettings } from 'react-icons/fi';
+
+interface SidebarItemProps {
+  icon: React.ElementType;
+  label: string;
+  to: string;
+}
+
+const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to }) => (
+  <Tooltip label={label} placement="right">
+    <Box as={Link} to={to} p={3} borderRadius="md" _hover={{ bg: 'whiteAlpha.200' }}>
+      <Icon as={icon} boxSize={6} />
+    </Box>
+  </Tooltip>
+);
 
 const Sidebar: React.FC = () => {
   return (
-    <aside className="sidebar">
-      <div className="logo">
-        <span className="icon">⚡</span> GoStock
-      </div>
-      <div className="investment">
-        <p>Total Investment</p>
-        <h2>$5380,90</h2>
-        <span className="percentage">+18,10% ↑</span>
-      </div>
-      <nav className="nav">
-        <ul>
-          <li><Link to="/">Home</Link></li>
-          <li><Link to="/dashboard">Dashboard</Link></li>
-          <li><Link to="/wallet">Wallet</Link></li>
-          <li><Link to="/news">News</Link></li>
-          <li><Link to="/stock-fund">Stock & Fund</Link></li>
-          <li><Link to="/community">Our Community</Link></li>
-          <li><Link to="/settings">Settings</Link></li>
-          <li><Link to="/contact">Contact us</Link></li>
-        </ul>
-      </nav>
-    </aside>
+    <Box w="60px" bg="gray.900" color="white" py={4}>
+      <VStack spacing={4}>
+        <SidebarItem icon={FiHome} label="Dashboard" to="/" />
+        <SidebarItem icon={FiTrendingUp} label="Analysis" to="/analysis" />
+        <SidebarItem icon={FiStar} label="Watchlist" to="/watchlist" />
+        <SidebarItem icon={FiFileText} label="News" to="/news" />
+        <SidebarItem icon={FiSettings} label="Settings" to="/settings" />
+      </VStack>
+    </Box>
   );
 };
 
