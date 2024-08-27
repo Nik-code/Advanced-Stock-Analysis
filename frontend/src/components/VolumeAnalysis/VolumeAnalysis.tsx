@@ -1,6 +1,9 @@
 import React from 'react';
 import { Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import './VolumeAnalysis.css';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 interface VolumeAnalysisProps {
   historicalData: any[];
@@ -20,11 +23,20 @@ const VolumeAnalysis: React.FC<VolumeAnalysisProps> = ({ historicalData }) => {
 
   const chartOptions = {
     responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: 'Volume Analysis',
+      },
+    },
     scales: {
       x: {
-        type: 'time',
+        type: 'time' as const,
         time: {
-          unit: 'day',
+          unit: 'day' as const,
         },
       },
       y: {
@@ -43,8 +55,8 @@ const VolumeAnalysis: React.FC<VolumeAnalysisProps> = ({ historicalData }) => {
       <Bar data={chartData} options={chartOptions} />
       <div className="volume-stats">
         <p>Average Volume: {averageVolume.toFixed(0)}</p>
-        <p>Max Volume: {maxVolume}</p>
-        <p>Min Volume: {minVolume}</p>
+        <p>Max Volume: {maxVolume.toFixed(0)}</p>
+        <p>Min Volume: {minVolume.toFixed(0)}</p>
       </div>
     </div>
   );

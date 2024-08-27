@@ -43,15 +43,6 @@
   margin-bottom: 20px;
 }
 
-.technical-indicators ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-.technical-indicators li {
-  margin-bottom: 10px;
-}
-
 .time-frame-selector {
   margin-bottom: 20px;
 }
@@ -67,4 +58,10 @@
 
 .time-frame-selector button:hover {
   background-color: #e0e0e0;
+}
+
+.stock-overview,
+.technical-analysis,
+.volume-analysis {
+  margin-bottom: 30px;
 }

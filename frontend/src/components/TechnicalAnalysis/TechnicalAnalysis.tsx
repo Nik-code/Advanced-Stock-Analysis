@@ -1,5 +1,6 @@
 import React from 'react';
 import { Line } from 'react-chartjs-2';
+import { ChartOptions } from 'chart.js';
 import './TechnicalAnalysis.css';
 
 interface TechnicalAnalysisProps {
@@ -31,11 +32,11 @@ const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({ technicalIndicato
     ],
   };
 
-  const chartOptions = {
+  const chartOptions: ChartOptions<'line'> = {
     responsive: true,
     scales: {
       x: {
-        type: 'time',
+        type: 'time' as const,
         time: {
           unit: 'day',
         },
