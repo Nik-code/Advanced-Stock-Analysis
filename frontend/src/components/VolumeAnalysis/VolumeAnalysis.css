@@ -1,0 +1,9 @@
+.volume-analysis {
+    margin-bottom: 20px;
+  }
+  
+  .volume-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
