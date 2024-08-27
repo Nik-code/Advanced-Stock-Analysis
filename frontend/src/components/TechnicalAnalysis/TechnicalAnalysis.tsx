@@ -1,7 +1,31 @@
 import React from 'react';
 import { Line } from 'react-chartjs-2';
-import { ChartOptions } from 'chart.js';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  TimeScale,
+  ChartOptions,
+} from 'chart.js';
+import 'chartjs-adapter-date-fns';
+import { enUS } from 'date-fns/locale';
 import './TechnicalAnalysis.css';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  TimeScale
+);
 
 interface TechnicalAnalysisProps {
   technicalIndicators: any;

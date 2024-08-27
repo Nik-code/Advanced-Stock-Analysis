@@ -9,11 +9,12 @@ import {
   Title,
   Tooltip,
   Legend,
-  ChartData,
-  ChartOptions,
   TimeScale,
+  ChartData,
+  ChartOptions
 } from 'chart.js';
 import { Chart as ReactChart } from 'react-chartjs-2';
+import 'chartjs-adapter-date-fns';
 import { getHistoricalData, getTechnicalIndicators, getQuote } from '../../services/api';
 import './Dashboard.css';
 import StockOverview from '../../components/StockOverview/StockOverview';
@@ -33,6 +34,7 @@ ChartJS.register(
 );
 
 const Dashboard: React.FC = () => {
+  const [darkMode, setDarkMode] = useState(false);
   const [stockCode, setStockCode] = useState<string>('');
   const [historicalData, setHistoricalData] = useState<any[]>([]);
   const [technicalIndicators, setTechnicalIndicators] = useState<any>(null);
@@ -63,11 +65,14 @@ const Dashboard: React.FC = () => {
   };
 
   useEffect(() => {
+    document.body.classList.toggle('dark-mode', darkMode);
+  }, [darkMode]);
+
+  useEffect(() => {
     return () => {
       if (chartRef.current) {
         chartRef.current.destroy();
       }
-      ChartJS.unregister(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, TimeScale);
     };
   }, []);
 
@@ -121,44 +126,61 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="dashboard">
-      <h1>Stock Analysis Dashboard</h1>
-      <div className="search-container">
-        <input
-          type="text"
-          value={stockCode}
-          onChange={(e) => setStockCode(e.target.value.toUpperCase())}
-          placeholder="Enter stock code (e.g., TCS)"
-          className="stock-search"
-        />
-        <button onClick={handleSearch} className="search-button">Search</button>
-      </div>
-
-      <div className="time-frame-selector">
-        <button onClick={() => setTimeFrame('1month')}>1M</button>
-        <button onClick={() => setTimeFrame('3months')}>3M</button>
-        <button onClick={() => setTimeFrame('1year')}>1Y</button>
-        <button onClick={() => setTimeFrame('5years')}>5Y</button>
-      </div>
-
-      {stockCode && quoteData && (
-        <div className="stock-data">
-          <StockOverview stockCode={stockCode} quoteData={quoteData} />
-
-          <div className="chart-container">
-            <h3>Historical Price and Volume Data</h3>
-            <ReactChart
-              ref={chartRef}
-              type='line'
-              data={chartData}
-              options={chartOptions}
+    <div className={`dashboard ${darkMode ? 'dark-mode' : ''}`}>
+      <header>
+        <h1>Advanced Stock Analysis</h1>
+        <button onClick={() => setDarkMode(!darkMode)}>
+          {darkMode ? 'Light Mode' : 'Dark Mode'}
+        </button>
+      </header>
+      <div className="dashboard-content">
+        <aside className="sidebar">
+          <div className="search-container">
+            <input
+              type="text"
+              value={stockCode}
+              onChange={(e) => setStockCode(e.target.value.toUpperCase())}
+              placeholder="Enter stock code (e.g., TCS)"
+              className="stock-search"
             />
+            <button onClick={handleSearch} className="search-button">Search</button>
           </div>
-
-          <TechnicalAnalysis technicalIndicators={technicalIndicators} />
-          <VolumeAnalysis historicalData={historicalData} />
-        </div>
-      )}
+          <div className="time-frame-selector">
+            <button onClick={() => setTimeFrame('1month')}>1M</button>
+            <button onClick={() => setTimeFrame('3months')}>3M</button>
+            <button onClick={() => setTimeFrame('1year')}>1Y</button>
+            <button onClick={() => setTimeFrame('5years')}>5Y</button>
+          </div>
+          <div className="watchlist">
+            <h3>Watchlist</h3>
+            {/* We'll implement this later */}
+          </div>
+        </aside>
+        <main className="main-content">
+          {stockCode && quoteData && (
+            <div className="stock-data">
+              <StockOverview stockCode={stockCode} quoteData={quoteData} />
+              <div className="chart-container">
+                <h3>Historical Price and Volume Data</h3>
+                <ReactChart
+                  ref={chartRef}
+                  type='line'
+                  data={chartData}
+                  options={chartOptions}
+                />
+              </div>
+              <div className="analysis-container">
+                <TechnicalAnalysis technicalIndicators={technicalIndicators} />
+                <VolumeAnalysis historicalData={historicalData} />
+              </div>
+              <div className="ml-predictions">
+                <h3>ML Predictions</h3>
+                <p>Coming soon: Advanced stock predictions using machine learning models.</p>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 };
