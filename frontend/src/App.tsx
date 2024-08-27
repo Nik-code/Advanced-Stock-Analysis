@@ -1,33 +1,36 @@
 // src/App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard/Dashboard';
-import Wallet from './pages/Wallet/Wallet';
+import Analysis from './pages/Analysis/Analysis';
+import Watchlist from './pages/Watchlist/Watchlist';
 import News from './pages/News/News';
-import StockFund from './pages/StockFund/StockFund';
-import Community from './pages/Community/Community';
 import Settings from './pages/Settings/Settings';
-import Contact from './pages/Contact/Contact';
-import StockDetail from './components/StockDetail';
+
+const theme = extendTheme({
+  config: {
+    initialColorMode: 'dark',
+    useSystemColorMode: false,
+  },
+});
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/wallet" element={<Wallet />} />
-          <Route path="/news" element={<News />} />
-          <Route path="/stock-fund" element={<StockFund />} />
-          <Route path="/community" element={<Community />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/stock/:symbol" element={<StockDetail />} />
-        </Routes>
-      </Layout>
-    </Router>
+    <ChakraProvider theme={theme}>
+      <Router>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/analysis" element={<Analysis />} />
+            <Route path="/watchlist" element={<Watchlist />} />
+            <Route path="/news" element={<News />} />
+            <Route path="/settings" element={<Settings />} />
+          </Routes>
+        </Layout>
+      </Router>
+    </ChakraProvider>
   );
 };
 
