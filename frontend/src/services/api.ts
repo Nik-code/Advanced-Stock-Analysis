@@ -29,7 +29,7 @@ export const getQuote = async (instruments: string) => {
 
 // Historical Data
 export const getHistoricalData = async (code: string, timeFrame: string = '1year') => {
-  const response = await api.get(`/api/historical/${code}?timeFrame=${timeFrame}`);
+  const response = await api.get(`/api/historical/${code}`, { params: { timeFrame } });
   return response.data;
 };
 
@@ -46,10 +46,11 @@ export const handleCallback = async (requestToken: string) => {
 };
 
 // Technical Indicators
-export const getTechnicalIndicators = async (symbol: string, days: number = 365) => {
-  const response = await api.get(`/api/stocks/${symbol}/indicators?days=${days}`);
+export const getTechnicalIndicators = async (code: string, timeFrame: string = '1year') => {
+  const response = await api.get(`api/stocks/${code}/indicators`, { params: { timeFrame } });
   return response.data;
 };
+
 // Real-time Data
 export const getRealtimeData = async (symbol: string) => {
   const response = await api.get(`/api/stocks/${symbol}/realtime`);
