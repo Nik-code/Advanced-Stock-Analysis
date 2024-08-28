@@ -34,15 +34,17 @@ ChartJS.register(
 const Analysis: React.FC = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const [stockCode, setStockCode] = useState<string>('');
+  const [timeFrame, setTimeFrame] = useState<string>('1year');
   const [historicalData, setHistoricalData] = useState<any[]>([]);
   const [technicalIndicators, setTechnicalIndicators] = useState<any>(null);
   const [quoteData, setQuoteData] = useState<any>(null);
-  const [timeFrame, setTimeFrame] = useState<string>('1year');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const chartRef = useRef<ChartJS<'line' | 'bar'> | null>(null);
 
-  const chartData: ChartData<'line' | 'bar', number[], string> = {
-    labels: historicalData.map(data => data.date),
+  const chartData: ChartData<'line' | 'bar', (number | null)[], string> = {
+    labels: historicalData.map(data => new Date(data.date).toISOString()),
     datasets: [
       {
         type: 'line' as const,
@@ -61,31 +63,6 @@ const Analysis: React.FC = () => {
     ]
   };
 
-  const handleSearch = async (newTimeFrame?: string) => {
-    console.log('Searching for stock:', stockCode);
-    if (stockCode) {
-      try {
-        const timeFrameToUse = newTimeFrame || timeFrame;
-        const [historical, indicators, quote] = await Promise.all([
-          getHistoricalData(stockCode, timeFrameToUse),
-          getTechnicalIndicators(stockCode),
-          getQuote(`BSE:${stockCode}`)
-        ]);
-        console.log('Historical data:', historical);
-        console.log('Technical indicators:', indicators);
-        console.log('Quote data:', quote);
-        setHistoricalData(historical);
-        setTechnicalIndicators(indicators);
-        setQuoteData(quote[`BSE:${stockCode}`]);
-        if (newTimeFrame) {
-          setTimeFrame(newTimeFrame);
-        }
-      } catch (error) {
-        console.error('Error fetching stock data:', error);
-      }
-    }
-  };
-
   const chartOptions: ChartOptions<'line' | 'bar'> = {
     responsive: true,
     interaction: {
@@ -93,20 +70,64 @@ const Analysis: React.FC = () => {
       intersect: false,
     },
     scales: {
+      x: {
+        type: 'time',
+        time: {
+          unit: timeFrame === '1month' ? 'day' : timeFrame === '3months' ? 'week' : 'month',
+        },
+      },
       y: {
         type: 'linear' as const,
         display: true,
         position: 'left' as const,
+        title: {
+          display: true,
+          text: 'Close Price'
+        }
       },
       y1: {
         type: 'linear' as const,
         display: true,
         position: 'right' as const,
+        title: {
+          display: true,
+          text: 'Volume'
+        },
         grid: {
           drawOnChartArea: false,
         },
       },
     },
+  };
+
+  const handleSearch = async (newTimeFrame?: string) => {
+    console.log('Searching for stock:', stockCode);
+    if (stockCode) {
+      setLoading(true);
+      setError(null);
+      try {
+        const timeFrameToUse = newTimeFrame || timeFrame;
+        const [historicalResponse, indicatorsResponse, quoteResponse] = await Promise.all([
+          getHistoricalData(stockCode, timeFrameToUse),
+          getTechnicalIndicators(stockCode, timeFrameToUse),
+          getQuote(stockCode),
+        ]);
+
+        setHistoricalData(historicalResponse);
+        setTechnicalIndicators(indicatorsResponse);
+        setQuoteData(quoteResponse);
+        setTimeFrame(timeFrameToUse);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError('Error fetching data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleTimeFrameChange = (newTimeFrame: string) => {
+    handleSearch(newTimeFrame);
   };
 
   return (
@@ -132,7 +153,7 @@ const Analysis: React.FC = () => {
                 {['1month', '3months', '1year', '5years'].map((tf) => (
                   <Button
                     key={tf}
-                    onClick={() => handleSearch(tf)}
+                    onClick={() => handleTimeFrameChange(tf)}
                     variant={timeFrame === tf ? 'solid' : 'outline'}
                   >
                     {tf.charAt(0).toUpperCase() + tf.slice(1)}
@@ -154,14 +175,14 @@ const Analysis: React.FC = () => {
                   <Heading size="md" mb={2}>Historical Price and Volume Data</Heading>
                   <ReactChart
                     ref={chartRef}
-                    type='line'
+                    type='bar'
                     data={chartData}
                     options={chartOptions}
                   />
                 </Box>
                 <Grid templateColumns="1fr 1fr" gap={6}>
                   <GridItem>
-                    <TechnicalAnalysis technicalIndicators={technicalIndicators} />
+                    <TechnicalAnalysis technicalIndicators={technicalIndicators} timeFrame={timeFrame} />
                   </GridItem>
                   <GridItem>
                     <VolumeAnalysis historicalData={historicalData} />
