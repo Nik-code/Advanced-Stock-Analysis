@@ -14,13 +14,12 @@ interface HistoricalData {
 }
 
 interface TechnicalIndicators {
-  sma: number;
-  ema: number;
-  rsi: number;
-  macd: {
-    macd: number;
-    signal: number;
-    histogram: number;
+  indicators: {
+    sma_20: { date: string; value: number }[];
+    ema_50: { date: string; value: number }[];
+    rsi_14: { date: string; value: number }[];
+    macd: { date: string; value: number }[];
+    atr: { date: string; value: number }[];
   };
 }
 
@@ -31,51 +30,50 @@ const StockDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [historicalResponse, indicatorsResponse] = await Promise.all([
-          getHistoricalData(symbol as string),
-          getTechnicalIndicators(symbol as string)
-        ]);
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const [historicalResponse, indicatorsResponse] = await Promise.all([
+        getHistoricalData(symbol as string),
+        getTechnicalIndicators(symbol as string, '1year')
+      ]);
 
-        setHistoricalData(historicalResponse);
-        setTechnicalIndicators(indicatorsResponse);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to fetch stock data. Please try again later.');
-        setLoading(false);
-      }
-    };
-
-    if (symbol) {
-      fetchData();
+      setHistoricalData(historicalResponse);
+      setTechnicalIndicators(indicatorsResponse); // This should now work correctly
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to fetch stock data. Please try again later.');
+      setLoading(false);
     }
-  }, [symbol]);
+  };
+
+  if (symbol) {
+    fetchData();
+  }
+}, [symbol]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
   return (
-    <div className="stockDetail">
-      <h2>{symbol} Stock Details</h2>
-      <div className="technicalIndicators">
-        <h3>Technical Indicators</h3>
-        {technicalIndicators && (
-          <ul>
-            <li>SMA: {technicalIndicators.sma.toFixed(2)}</li>
-            <li>EMA: {technicalIndicators.ema.toFixed(2)}</li>
-            <li>RSI: {technicalIndicators.rsi.toFixed(2)}</li>
-            <li>MACD: {technicalIndicators.macd.macd.toFixed(2)}</li>
-            <li>MACD Signal: {technicalIndicators.macd.signal.toFixed(2)}</li>
-            <li>MACD Histogram: {technicalIndicators.macd.histogram.toFixed(2)}</li>
-          </ul>
-        )}
-      </div>
-      <div className="historicalData">
-        <h3>Historical Data</h3>
-        <table>
-          <thead>
+      <div className="stockDetail">
+        <h2>{symbol} Stock Details</h2>
+        <div className="technicalIndicators">
+          <h3>Technical Indicators</h3>
+          {technicalIndicators && technicalIndicators.indicators && (
+            <ul>
+              <li>SMA 20: {technicalIndicators.indicators.sma_20[technicalIndicators.indicators.sma_20.length - 1]?.value.toFixed(2) || 'N/A'}</li>
+              <li>EMA 50: {technicalIndicators.indicators.ema_50[technicalIndicators.indicators.ema_50.length - 1]?.value.toFixed(2) || 'N/A'}</li>
+              <li>RSI: {technicalIndicators.indicators.rsi_14[technicalIndicators.indicators.rsi_14.length - 1]?.value.toFixed(2) || 'N/A'}</li>
+              <li>MACD: {technicalIndicators.indicators.macd[technicalIndicators.indicators.macd.length - 1]?.value.toFixed(2) || 'N/A'}</li>
+              <li>ATR: {technicalIndicators.indicators.atr[technicalIndicators.indicators.atr.length - 1]?.value.toFixed(2) || 'N/A'}</li>
+            </ul>
+          )}
+        </div>
+        <div className="historicalData">
+          <h3>Historical Data</h3>
+          <table>
+            <thead>
             <tr>
               <th>Date</th>
               <th>Open</th>
@@ -84,22 +82,22 @@ const StockDetail: React.FC = () => {
               <th>Close</th>
               <th>Volume</th>
             </tr>
-          </thead>
-          <tbody>
+            </thead>
+            <tbody>
             {historicalData.slice(0, 10).map((data) => (
-              <tr key={data.date}>
-                <td>{data.date}</td>
-                <td>{data.open.toFixed(2)}</td>
-                <td>{data.high.toFixed(2)}</td>
-                <td>{data.low.toFixed(2)}</td>
-                <td>{data.close.toFixed(2)}</td>
-                <td>{data.volume}</td>
-              </tr>
+                <tr key={data.date}>
+                  <td>{data.date}</td>
+                  <td>{data.open.toFixed(2)}</td>
+                  <td>{data.high.toFixed(2)}</td>
+                  <td>{data.low.toFixed(2)}</td>
+                  <td>{data.close.toFixed(2)}</td>
+                  <td>{data.volume}</td>
+                </tr>
             ))}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
   );
 };
 
