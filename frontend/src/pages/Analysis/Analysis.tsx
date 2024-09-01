@@ -18,6 +18,8 @@ import { getHistoricalData, getTechnicalIndicators, getQuote } from '../../servi
 import StockOverview from '../../components/StockOverview/StockOverview';
 import TechnicalAnalysis from '../../components/TechnicalAnalysis/TechnicalAnalysis';
 import VolumeAnalysis from '../../components/VolumeAnalysis/VolumeAnalysis';
+import axios from 'axios';
+import PredictionGraph from '../components/PredictionGraph';
 
 ChartJS.register(
   CategoryScale,
@@ -40,6 +42,7 @@ const Analysis: React.FC = () => {
   const [quoteData, setQuoteData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [prediction, setPrediction] = useState<number | null>(null);
 
   const chartRef = useRef<ChartJS<'line' | 'bar'> | null>(null);
 
@@ -130,6 +133,15 @@ const Analysis: React.FC = () => {
     handleSearch(newTimeFrame);
   };
 
+  const handlePredict = async () => {
+    try {
+      const response = await axios.post('/api/predict', historicalData.map(data => data.close));
+      setPrediction(response.data.prediction);
+    } catch (error) {
+      console.error("Error fetching prediction:", error);
+    }
+  };
+
   return (
     <Box>
       <VStack spacing={6} align="stretch">
@@ -190,7 +202,13 @@ const Analysis: React.FC = () => {
                 </Grid>
                 <Box>
                   <Heading size="md" mb={2}>ML Predictions</Heading>
-                  <Text>Coming soon: Advanced stock predictions using machine learning models.</Text>
+                  <Button onClick={handlePredict}>Predict</Button>
+                  {prediction && (
+                    <>
+                      <Text>Predicted Next Day Close: {prediction.toFixed(2)}</Text>
+                      <PredictionGraph historicalData={historicalData} prediction={prediction} />
+                    </>
+                  )}
                 </Box>
               </VStack>
             )}
