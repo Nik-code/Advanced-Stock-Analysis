@@ -212,10 +212,16 @@ async def predict_stock(stock_code: str, data: List[float]):
         
         data = np.array(data).reshape(-1, 1)
         scaled_data = scaler.transform(data)
-        X = np.array([scaled_data[-60:]])
-        prediction = predictor.predict(X)
-        prediction = scaler.inverse_transform(prediction)
-        return {"prediction": prediction[0][0]}
+        
+        predictions = []
+        for _ in range(7):  # Predict next 7 days
+            X = np.array([scaled_data[-60:]])
+            prediction = predictor.predict(X)
+            predictions.append(prediction[0][0])
+            scaled_data = np.vstack((scaled_data, prediction))
+        
+        predictions = scaler.inverse_transform(np.array(predictions).reshape(-1, 1))
+        return {"predictions": predictions.flatten().tolist()}
     except Exception as e:
         logger.error(f"Error making prediction for {stock_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error making prediction for {stock_code}")
