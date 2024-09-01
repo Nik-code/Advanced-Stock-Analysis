@@ -10,6 +10,8 @@ from app.api import stocks
 import os
 import pandas as pd
 import numpy as np
+from typing import List
+from app.models.lstm_model import LSTMStockPredictor
 
 load_dotenv()
 
@@ -194,6 +196,23 @@ async def compare_stocks(symbols: str, days: int = 365):
     except Exception as e:
         logger.error(f"Error comparing stocks: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+model_path = "path/to/saved_model.h5"
+predictor = LSTMStockPredictor(input_shape=(60, 1))
+predictor.load_model(model_path)
+
+@app.post("/api/predict")
+async def predict_stock(data: List[float]):
+    try:
+        data = np.array(data).reshape(-1, 1)
+        X, _, scaler = predictor.preprocess_data(data)
+        prediction = predictor.predict(X[-1].reshape(1, 60, 1))
+        prediction = scaler.inverse_transform(prediction)
+        return {"prediction": prediction[0][0]}
+    except Exception as e:
+        logger.error(f"Error making prediction: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error making prediction")
 
 
 if __name__ == "__main__":
