@@ -8,6 +8,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
 
+
 class LSTMStockPredictor:
     def __init__(self, input_shape, lstm_units=50, dropout_rate=0.2):
         self.model = Sequential()
@@ -53,10 +54,17 @@ class LSTMStockPredictor:
         plt.legend()
         plt.show()
 
+    def save_model(self, file_path):
+        self.model.save(file_path)
+
+    def load_model(self, file_path):
+        self.model = tf.keras.models.load_model(file_path)
+
+
 # Example usage:
-# data = pd.read_csv('path_to_your_data.csv')
+# data = pd.read_csv('/Users/priyanshsingh/Developer/Projects/Advanced-Stock-Analysis/backend/data/500027.csv')
 # predictor = LSTMStockPredictor(input_shape=(60, 1))
-# X, y, scaler = predictor.preprocess_data(data['Close'].values.reshape(-1, 1))
+# X, y, scaler = predictor.preprocess_data(data['Close Price'].values.reshape(-1, 1))
 # history = predictor.train(X, y)
 # predictions = predictor.predict(X)
 # mae, rmse = predictor.evaluate(X, y)
