@@ -202,9 +202,14 @@ async def compare_stocks(symbols: str, days: int = 365):
 @app.post("/api/predict/{stock_code}")
 async def predict_stock(stock_code: str, data: List[float]):
     try:
+        logger.info(f"Received prediction request for {stock_code}")
         model_dir = os.path.join(os.path.dirname(__file__), 'models')
         model_path = os.path.join(model_dir, f'{stock_code}_lstm_model.h5')
         scaler_path = os.path.join(model_dir, f'{stock_code}_scaler.pkl')
+        
+        if not os.path.exists(model_path) or not os.path.exists(scaler_path):
+            logger.error(f"Model or scaler not found for {stock_code}")
+            raise HTTPException(status_code=404, detail=f"Model not found for {stock_code}")
         
         predictor = LSTMStockPredictor(input_shape=(60, 1))
         predictor.load_model(model_path)
@@ -221,10 +226,11 @@ async def predict_stock(stock_code: str, data: List[float]):
             scaled_data = np.vstack((scaled_data, prediction))
         
         predictions = scaler.inverse_transform(np.array(predictions).reshape(-1, 1))
+        logger.info(f"Successfully generated predictions for {stock_code}")
         return {"predictions": predictions.flatten().tolist()}
     except Exception as e:
         logger.error(f"Error making prediction for {stock_code}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error making prediction for {stock_code}")
+        raise HTTPException(status_code=500, detail=f"Error making prediction for {stock_code}: {str(e)}")
 
 
 if __name__ == "__main__":
