@@ -199,15 +199,17 @@ async def compare_stocks(symbols: str, days: int = 365):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-model_path = "models/lstm_model.h5"
-scaler_path = "models/scaler.pkl"
-predictor = LSTMStockPredictor(input_shape=(60, 1))
-predictor.load_model(model_path)
-scaler = joblib.load(scaler_path)
-
-@app.post("/api/predict")
-async def predict_stock(data: List[float]):
+@app.post("/api/predict/{stock_code}")
+async def predict_stock(stock_code: str, data: List[float]):
     try:
+        model_dir = os.path.join(os.path.dirname(__file__), 'models')
+        model_path = os.path.join(model_dir, f'{stock_code}_lstm_model.h5')
+        scaler_path = os.path.join(model_dir, f'{stock_code}_scaler.pkl')
+        
+        predictor = LSTMStockPredictor(input_shape=(60, 1))
+        predictor.load_model(model_path)
+        scaler = joblib.load(scaler_path)
+        
         data = np.array(data).reshape(-1, 1)
         scaled_data = scaler.transform(data)
         X = np.array([scaled_data[-60:]])
@@ -215,8 +217,8 @@ async def predict_stock(data: List[float]):
         prediction = scaler.inverse_transform(prediction)
         return {"prediction": prediction[0][0]}
     except Exception as e:
-        logger.error(f"Error making prediction: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error making prediction")
+        logger.error(f"Error making prediction for {stock_code}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error making prediction for {stock_code}")
 
 
 if __name__ == "__main__":

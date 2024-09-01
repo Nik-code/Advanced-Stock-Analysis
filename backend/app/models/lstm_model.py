@@ -30,9 +30,15 @@ class LSTMStockPredictor:
         X = np.reshape(X, (X.shape[0], X.shape[1], 1))
         return X, y, scaler
 
-    def train(self, X_train, y_train, epochs=50, batch_size=32, validation_split=0.2):
+    def train(self, X_train, y_train, epochs=100, batch_size=32, validation_split=0.1):
         early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
-        history = self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=validation_split, callbacks=[early_stopping])
+        history = self.model.fit(
+            X_train, y_train,
+            epochs=epochs,
+            batch_size=batch_size,
+            validation_split=validation_split,
+            callbacks=[early_stopping]
+        )
         return history
 
     def predict(self, X):
