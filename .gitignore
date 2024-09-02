@@ -10,6 +10,8 @@ docs/
 frontend/repopacks
 frontend/node_modules/
 
+.cursorignore
+
 
 # C extensions
 *.so

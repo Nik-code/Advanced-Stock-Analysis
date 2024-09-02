@@ -218,16 +218,30 @@ async def predict_stock(stock_code: str, data: List[float]):
         data = np.array(data).reshape(-1, 1)
         scaled_data = scaler.transform(data)
         
-        predictions = []
+        # Generate past predictions
+        past_predictions = []
+        for i in range(60, len(scaled_data)):
+            X = np.array([scaled_data[i-60:i]])
+            prediction = predictor.predict(X)
+            past_predictions.append(prediction[0][0])
+        
+        past_predictions = scaler.inverse_transform(np.array(past_predictions).reshape(-1, 1))
+        
+        # Generate future predictions
+        future_predictions = []
         for _ in range(7):  # Predict next 7 days
             X = np.array([scaled_data[-60:]])
             prediction = predictor.predict(X)
-            predictions.append(prediction[0][0])
+            future_predictions.append(prediction[0][0])
             scaled_data = np.vstack((scaled_data, prediction))
         
-        predictions = scaler.inverse_transform(np.array(predictions).reshape(-1, 1))
+        future_predictions = scaler.inverse_transform(np.array(future_predictions).reshape(-1, 1))
         logger.info(f"Successfully generated predictions for {stock_code}")
-        return {"predictions": predictions.flatten().tolist()}
+        
+        return {
+            "predictions": future_predictions.flatten().tolist(),
+            "past_predictions": past_predictions.flatten().tolist()
+        }
     except Exception as e:
         logger.error(f"Error making prediction for {stock_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error making prediction for {stock_code}: {str(e)}")
@@ -243,6 +257,7 @@ async def ingest_data(scrip_code: str, time_frame: str = '1year'):
         logger.error(f"Error ingesting data for {scrip_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error ingesting data for {scrip_code}")
 
+
 # New endpoint to update data in InfluxDB
 @app.post("/api/update/{scrip_code}")
 async def update_data(scrip_code: str):
@@ -252,6 +267,7 @@ async def update_data(scrip_code: str):
     except Exception as e:
         logger.error(f"Error updating data for {scrip_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating data for {scrip_code}")
+
 
 if __name__ == "__main__":
     import uvicorn
