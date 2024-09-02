@@ -4,13 +4,13 @@ import os
 from datetime import datetime, timedelta
 import traceback
 import logging
-
+from .technical_indicators import calculate_rsi, calculate_sma, calculate_ema, calculate_macd, calculate_bollinger_bands, calculate_atr
+from .influx_writer import write_stock_data_to_influxdb
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 zerodha_service = ZerodhaService()
-
 
 async def fetch_historical_data(scrip_code: str, time_frame: str = '1year'):
     try:
@@ -55,16 +55,19 @@ async def fetch_historical_data(scrip_code: str, time_frame: str = '1year'):
         logger.error(traceback.format_exc())
         return None
 
+async def fetch_process_store_data(scrip_code: str, time_frame: str = '1year'):
+    df = await fetch_historical_data(scrip_code, time_frame)
+    if df is not None:
+        # Calculate technical indicators
+        df['RSI'] = calculate_rsi(df['close'])
+        df['SMA_20'] = calculate_sma(df['close'], 20)
+        df['EMA_50'] = calculate_ema(df['close'], 50)
+        df['MACD'], df['MACD_Signal'], df['MACD_Hist'] = calculate_macd(df['close'])
+        df['Bollinger_Upper'], df['Bollinger_Middle'], df['Bollinger_Lower'] = calculate_bollinger_bands(df['close'])
+        df['ATR'] = calculate_atr(df['high'], df['low'], df['close'])
 
-async def collect_and_store_data(scrip_codes: list, data_folder: str = 'data'):
-    if not os.path.exists(data_folder):
-        os.makedirs(data_folder)
-
-    for scrip_code in scrip_codes:
-        df = await fetch_historical_data(scrip_code)
-        if df is not None:
-            file_path = os.path.join(data_folder, f"{scrip_code}.csv")
-            df.to_csv(file_path)
-            print(f"Data for {scrip_code} saved to {file_path}")
-        else:
-            print(f"Skipping {scrip_code} due to missing data.")
+        # Write to InfluxDB
+        write_stock_data_to_influxdb(df, scrip_code)
+        logger.info(f"Data for {scrip_code} processed and stored in InfluxDB.")
+    else:
+        logger.error(f"Skipping {scrip_code} due to missing data.")

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.services.data_collection import fetch_historical_data
+from app.services.data_collection import fetch_historical_data, fetch_process_store_data
 from app.services.technical_indicators import calculate_sma, calculate_ema, calculate_rsi, calculate_macd, calculate_bollinger_bands, calculate_atr
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv, find_dotenv, set_key
@@ -231,6 +231,17 @@ async def predict_stock(stock_code: str, data: List[float]):
     except Exception as e:
         logger.error(f"Error making prediction for {stock_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error making prediction for {stock_code}: {str(e)}")
+
+
+# New endpoint to trigger data ingestion
+@app.post("/api/ingest/{scrip_code}")
+async def ingest_data(scrip_code: str, time_frame: str = '1year'):
+    try:
+        await fetch_process_store_data(scrip_code, time_frame)
+        return {"message": f"Data for {scrip_code} ingested successfully"}
+    except Exception as e:
+        logger.error(f"Error ingesting data for {scrip_code}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error ingesting data for {scrip_code}")
 
 
 if __name__ == "__main__":
