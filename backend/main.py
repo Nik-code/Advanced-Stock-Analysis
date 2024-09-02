@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.services.data_collection import fetch_historical_data, fetch_process_store_data
+from app.services.data_collection import fetch_historical_data, fetch_process_store_data, update_influxdb_with_latest_data
 from app.services.technical_indicators import calculate_sma, calculate_ema, calculate_rsi, calculate_macd, calculate_bollinger_bands, calculate_atr
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv, find_dotenv, set_key
@@ -243,6 +243,15 @@ async def ingest_data(scrip_code: str, time_frame: str = '1year'):
         logger.error(f"Error ingesting data for {scrip_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error ingesting data for {scrip_code}")
 
+# New endpoint to update data in InfluxDB
+@app.post("/api/update/{scrip_code}")
+async def update_data(scrip_code: str):
+    try:
+        await update_influxdb_with_latest_data(scrip_code)
+        return {"message": f"Data for {scrip_code} updated successfully"}
+    except Exception as e:
+        logger.error(f"Error updating data for {scrip_code}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating data for {scrip_code}")
 
 if __name__ == "__main__":
     import uvicorn

@@ -5,12 +5,14 @@ from datetime import datetime, timedelta
 import traceback
 import logging
 from .technical_indicators import calculate_rsi, calculate_sma, calculate_ema, calculate_macd, calculate_bollinger_bands, calculate_atr
-from .influx_writer import write_stock_data_to_influxdb
+from ..db.influx_writer import write_stock_data_to_influxdb
+from ..db.influx_client import get_influxdb_client
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 zerodha_service = ZerodhaService()
+client = get_influxdb_client()
 
 async def fetch_historical_data(scrip_code: str, time_frame: str = '1year'):
     try:
@@ -71,3 +73,60 @@ async def fetch_process_store_data(scrip_code: str, time_frame: str = '1year'):
         logger.info(f"Data for {scrip_code} processed and stored in InfluxDB.")
     else:
         logger.error(f"Skipping {scrip_code} due to missing data.")
+
+async def update_influxdb_with_latest_data(scrip_code: str):
+    try:
+        query_api = client.query_api()
+        query = f'''
+        from(bucket: "stock_data")
+          |> range(start: 0)
+          |> filter(fn: (r) => r._measurement == "stock_data" and r.symbol == "{scrip_code}")
+          |> keep(columns: ["_time"])
+          |> sort(columns: ["_time"], desc: true)
+          |> limit(n: 1)
+        '''
+        result = query_api.query(org="my_org", query=query)
+        if not result:
+            logger.warning(f"No existing data found for {scrip_code} in InfluxDB.")
+            await fetch_process_store_data(scrip_code, '5years')
+            return
+
+        last_date = result[0].records[0].get_time()
+        start_date = last_date + timedelta(days=1)
+        end_date = datetime.now()
+
+        logger.info(f"Fetching latest data for {scrip_code} from {start_date} to {end_date}")
+        instrument_token = zerodha_service.get_instrument_token("BSE", scrip_code)
+        if not instrument_token:
+            logger.error(f"No instrument token found for {scrip_code}")
+            return
+
+        data = zerodha_service.get_historical_data(
+            instrument_token,
+            start_date,
+            end_date,
+            "day"
+        )
+
+        if not data:
+            logger.warning(f"No new data found for {scrip_code}.")
+            return
+
+        df = pd.DataFrame(data)
+        logger.info(f"Columns in the dataframe: {df.columns}")
+        logger.info(f"Successfully fetched {len(df)} new data points for {scrip_code}")
+
+        # Calculate technical indicators
+        df['RSI'] = calculate_rsi(df['close'])
+        df['SMA_20'] = calculate_sma(df['close'], 20)
+        df['EMA_50'] = calculate_ema(df['close'], 50)
+        df['MACD'], df['MACD_Signal'], df['MACD_Hist'] = calculate_macd(df['close'])
+        df['Bollinger_Upper'], df['Bollinger_Middle'], df['Bollinger_Lower'] = calculate_bollinger_bands(df['close'])
+        df['ATR'] = calculate_atr(df['high'], df['low'], df['close'])
+
+        # Write to InfluxDB
+        write_stock_data_to_influxdb(df, scrip_code)
+        logger.info(f"New data for {scrip_code} processed and stored in InfluxDB.")
+    except Exception as e:
+        logger.error(f"Error updating data for {scrip_code}: {str(e)}")
+        logger.error(traceback.format_exc())

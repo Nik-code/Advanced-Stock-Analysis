@@ -3,7 +3,7 @@ import pandas as pd
 import logging
 from influxdb_client import Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS  # Ensure this is imported
-from influx_client import get_influxdb_client
+from ..db.influx_client import get_influxdb_client
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
 
