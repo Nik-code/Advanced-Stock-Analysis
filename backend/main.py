@@ -13,6 +13,7 @@ import numpy as np
 from typing import List
 from app.models.lstm_model import LSTMStockPredictor
 import joblib
+from app.services.llm_integration import LLaMAProcessor
 
 load_dotenv()
 
@@ -32,6 +33,7 @@ app.add_middleware(
 
 scheduler = AsyncIOScheduler()
 zerodha_service = ZerodhaService()
+llm_processor = LLaMAProcessor()
 
 app.include_router(stocks.router, prefix="/api")
 
@@ -267,6 +269,17 @@ async def update_data(scrip_code: str):
     except Exception as e:
         logger.error(f"Error updating data for {scrip_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating data for {scrip_code}")
+
+
+@app.get("/api/sentiment/{symbol}")
+async def get_sentiment(symbol: str):
+    try:
+        news_data = await fetch_news_data(symbol)
+        news_analysis = await process_news_data(news_data)
+        return {"sentiment": news_analysis['sentiment'], "topics": news_analysis['topics']}
+    except Exception as e:
+        logger.error(f"Error analyzing sentiment for {symbol}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
