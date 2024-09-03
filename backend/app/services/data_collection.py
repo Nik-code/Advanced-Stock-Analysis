@@ -7,12 +7,16 @@ import logging
 from .technical_indicators import calculate_rsi, calculate_sma, calculate_ema, calculate_macd, calculate_bollinger_bands, calculate_atr
 from ..db.influx_writer import write_stock_data_to_influxdb
 from ..db.influx_client import get_influxdb_client
+from .llm_integration import LLaMAProcessor
+import aiohttp
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 zerodha_service = ZerodhaService()
 client = get_influxdb_client()
+
+llm_processor = LLaMAProcessor()
 
 async def fetch_historical_data(scrip_code: str, time_frame: str = '1year'):
     try:
@@ -68,11 +72,40 @@ async def fetch_process_store_data(scrip_code: str, time_frame: str = '1year'):
         df['Bollinger_Upper'], df['Bollinger_Middle'], df['Bollinger_Lower'] = calculate_bollinger_bands(df['close'])
         df['ATR'] = calculate_atr(df['high'], df['low'], df['close'])
 
+        # Fetch and process news data
+        news_data = await fetch_news_data(scrip_code)
+        news_analysis = await process_news_data(news_data)
+        
+        # Add news analysis to the dataframe
+        df['News_Sentiment'] = news_analysis['sentiment']
+        df['News_Topics'] = ','.join(news_analysis['topics'])
+
         # Write to InfluxDB
         write_stock_data_to_influxdb(df, scrip_code)
         logger.info(f"Data for {scrip_code} processed and stored in InfluxDB.")
     else:
         logger.error(f"Skipping {scrip_code} due to missing data.")
+
+async def fetch_news_data(scrip_code: str):
+    # This is a placeholder function. You'll need to implement actual news fetching logic.
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"https://api.example.com/news/{scrip_code}") as response:
+            news_data = await response.json()
+    return news_data
+
+async def process_news_data(news_data):
+    sentiments = []
+    topics = []
+    for article in news_data:
+        sentiment = llm_processor.analyze_sentiment(article['text'])
+        article_topics = llm_processor.extract_key_topics(article['text'])
+        sentiments.append(sentiment)
+        topics.extend(article_topics)
+    
+    return {
+        'sentiment': max(set(sentiments), key=sentiments.count),
+        'topics': list(set(topics))
+    }
 
 async def update_influxdb_with_latest_data(scrip_code: str):
     try:
