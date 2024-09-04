@@ -11,6 +11,7 @@ from .llm_integration import LLaMAProcessor
 import aiohttp
 import yfinance as yf
 import asyncio
+from textblob import TextBlob
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -112,16 +113,28 @@ async def fetch_news_data(scrip_code: str):
 
 async def process_news_data(news_data):
     sentiments = []
-    topics = []
+    topics = set()
+    
     for article in news_data:
-        sentiment = article.get('overall_sentiment_score', 0)
-        article_topics = article.get('topics', [])
+        text = f"{article['title']} {article['summary']}"
+        
+        # Use LLaMAProcessor for sentiment analysis
+        sentiment = llm_processor.analyze_sentiment(text)
         sentiments.append(sentiment)
-        topics.extend([topic['topic'] for topic in article_topics])
+        
+        # Use LLaMAProcessor for keyword extraction
+        extracted_topics = llm_processor.extract_key_topics(text)
+        topics.update(extracted_topics)
+    
+    # Calculate average sentiment
+    if sentiments:
+        avg_sentiment = sum(map(lambda x: 1 if x == 'positive' else (-1 if x == 'negative' else 0), sentiments)) / len(sentiments)
+    else:
+        avg_sentiment = 0
     
     return {
-        'sentiment': sum(sentiments) / len(sentiments) if sentiments else 0,
-        'topics': list(set(topics))
+        'sentiment': avg_sentiment,
+        'topics': list(topics)[:5]  # Limit to top 5 topics
     }
 
 async def update_influxdb_with_latest_data(scrip_code: str):
