@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.services.data_collection import fetch_historical_data, fetch_process_store_data, update_influxdb_with_latest_data
+from app.services.data_collection import fetch_historical_data, fetch_process_store_data, update_influxdb_with_latest_data, fetch_news_data, process_news_data
 from app.services.technical_indicators import calculate_sma, calculate_ema, calculate_rsi, calculate_macd, calculate_bollinger_bands, calculate_atr
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv, find_dotenv, set_key
@@ -13,7 +13,7 @@ import numpy as np
 from typing import List
 from app.models.lstm_model import LSTMStockPredictor
 import joblib
-from app.services.llm_integration import LLaMAProcessor
+from app.services.llm_integration import GPT4Processor
 
 load_dotenv()
 
@@ -33,7 +33,7 @@ app.add_middleware(
 
 scheduler = AsyncIOScheduler()
 zerodha_service = ZerodhaService()
-llm_processor = LLaMAProcessor()
+llm_processor = GPT4Processor()
 
 app.include_router(stocks.router, prefix="/api")
 
@@ -274,9 +274,26 @@ async def update_data(scrip_code: str):
 @app.get("/api/sentiment/{symbol}")
 async def get_sentiment(symbol: str):
     try:
+        logger.info(f"Fetching news data for {symbol}")
         news_data = await fetch_news_data(symbol)
-        news_analysis = await process_news_data(news_data)
-        return {"sentiment": news_analysis['sentiment'], "topics": news_analysis['topics']}
+        logger.info(f"Fetched {len(news_data)} news articles for {symbol}")
+        
+        # Get LSTM prediction
+        historical_data = await fetch_historical_data(symbol, '1year')
+        if historical_data is None:
+            raise HTTPException(status_code=404, detail=f"No data found for stock symbol {symbol}")
+        close_prices = historical_data['close'].tolist()
+        lstm_prediction = await predict_stock(symbol, close_prices)
+        
+        logger.info(f"Processing news data for {symbol}")
+        news_analysis = await process_news_data(news_data, lstm_prediction['predictions'][0])
+        logger.info(f"Sentiment analysis result for {symbol}: {news_analysis}")
+        return {
+            "sentiment": news_analysis['sentiment'],
+            "explanation": news_analysis['explanation'],
+            "analysis": news_analysis['analysis'],
+            "lstm_prediction": lstm_prediction['predictions'][0]
+        }
     except Exception as e:
         logger.error(f"Error analyzing sentiment for {symbol}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

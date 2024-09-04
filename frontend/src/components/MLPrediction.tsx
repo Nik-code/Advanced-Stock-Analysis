@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
+import { Box, VStack, Text, Button, Spinner } from '@chakra-ui/react';
 import axios from 'axios';
-import { Button, Box, Text } from '@chakra-ui/react';
-import { Line } from 'react-chartjs-2';
 
 interface MLPredictionProps {
   stockCode: string;
@@ -11,6 +10,9 @@ interface MLPredictionProps {
 const MLPrediction: React.FC<MLPredictionProps> = ({ stockCode, historicalData }) => {
   const [predictions, setPredictions] = useState<number[]>([]);
   const [pastPredictions, setPastPredictions] = useState<number[]>([]);
+  const [sentiment, setSentiment] = useState<number | null>(null);
+  const [explanation, setExplanation] = useState<string>('');
+  const [analysis, setAnalysis] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +27,8 @@ const MLPrediction: React.FC<MLPredictionProps> = ({ stockCode, historicalData }
       setPredictions(predictionResponse.data.predictions);
       setPastPredictions(predictionResponse.data.past_predictions);
       setSentiment(sentimentResponse.data.sentiment);
-      setTopics(sentimentResponse.data.topics);
+      setExplanation(sentimentResponse.data.explanation);
+      setAnalysis(sentimentResponse.data.analysis);
     } catch (error) {
       console.error('Error fetching predictions or sentiment:', error);
       setError('Failed to fetch predictions or sentiment. Please try again.');
@@ -33,49 +36,23 @@ const MLPrediction: React.FC<MLPredictionProps> = ({ stockCode, historicalData }
     setIsLoading(false);
   };
 
-  const pastPredictionData = historicalData.slice(60).map((d, i) => pastPredictions[i]);
-
-  const chartData = {
-    labels: [...historicalData.map(d => d.date), ...Array(7).fill('').map((_, i) => `Day ${i + 1}`)],
-    datasets: [
-      {
-        label: 'Historical Close Price',
-        data: historicalData.map(d => d.close),
-        fill: false,
-        borderColor: 'rgb(75, 192, 192)',
-        tension: 0.1
-      },
-      {
-        label: 'Past Predicted Close Price',
-        data: [...Array(60).fill(null), ...pastPredictionData],
-        fill: false,
-        borderColor: 'rgb(255, 159, 64)',
-        tension: 0.1
-      },
-      {
-        label: 'Predicted Close Price',
-        data: [...Array(historicalData.length).fill(null), ...predictions],
-        fill: false,
-        borderColor: 'rgb(255, 99, 132)',
-        tension: 0.1
-      }
-    ]
-  };
-
   return (
     <Box>
-      <Button onClick={handlePrediction} isLoading={isLoading} mb={4}>
-        Show ML Prediction
+      <Button onClick={handlePrediction} isLoading={isLoading}>
+        Generate Prediction and Analysis
       </Button>
-      {error && <Text color="red.500" mb={4}>{error}</Text>}
-      {predictions.length > 0 && (
-        <Line data={chartData} options={{ responsive: true }} />
-      )}
+      {error && <Text color="red.500">{error}</Text>}
       {sentiment !== null && (
-        <Box mt={4}>
-          <Text fontWeight="bold">Sentiment: {sentiment.toFixed(2)}</Text>
-          <Text fontWeight="bold">Top Topics: {topics.join(', ')}</Text>
-        </Box>
+        <VStack align="start" spacing={4} mt={4}>
+          <Text fontWeight="bold">Sentiment Score: {sentiment.toFixed(2)}</Text>
+          <Text fontWeight="bold">Explanation: {explanation}</Text>
+          <Text fontWeight="bold">Analysis:</Text>
+          <Text>{analysis}</Text>
+          <Text fontWeight="bold">LSTM Prediction (Next 7 days):</Text>
+          {predictions.map((pred, index) => (
+            <Text key={index}>Day {index + 1}: {pred.toFixed(2)}</Text>
+          ))}
+        </VStack>
       )}
     </Box>
   );

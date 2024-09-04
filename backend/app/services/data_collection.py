@@ -116,26 +116,17 @@ async def fetch_news_data(scrip_code: str):
         logger.error(f"Error fetching news data for {scrip_code}: {str(e)}")
         return []
 
-async def process_news_data(news_data):
+async def process_news_data(news_data, lstm_prediction):
     logger.info(f"Processing {len(news_data)} news articles")
     
-    combined_text = "\n".join([f"{article['title']} {article['summary']}" for article in news_data])
-    
-    sentiment_result = llm_processor.analyze_sentiment(combined_text)
-    summary = llm_processor.generate_summary(news_data)
-    
-    # Parse the sentiment result
-    sentiment_lines = sentiment_result.split('\n')
-    sentiment = sentiment_lines[0].split(': ')[1].lower()
-    explanation = sentiment_lines[1].split(': ')[1]
-    
-    # Calculate numeric sentiment
-    sentiment_value = 1 if sentiment == 'positive' else (-1 if sentiment == 'negative' else 0)
+    sentiment_score = llm_processor.analyze_sentiment(news_data)
+    sentiment_explanation = llm_processor.explain_sentiment(news_data, sentiment_score)
+    final_analysis = llm_processor.final_analysis(sentiment_score, sentiment_explanation, lstm_prediction)
     
     result = {
-        'sentiment': sentiment_value,
-        'explanation': explanation,
-        'summary': summary
+        'sentiment': sentiment_score,
+        'explanation': sentiment_explanation,
+        'analysis': final_analysis
     }
     logger.info(f"Final sentiment analysis result: {result}")
     return result
