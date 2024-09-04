@@ -9,6 +9,8 @@ from ..db.influx_writer import write_stock_data_to_influxdb
 from ..db.influx_client import get_influxdb_client
 from .llm_integration import LLaMAProcessor
 import aiohttp
+import yfinance as yf
+import asyncio
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -87,22 +89,23 @@ async def fetch_process_store_data(scrip_code: str, time_frame: str = '1year'):
         logger.error(f"Skipping {scrip_code} due to missing data.")
 
 async def fetch_news_data(scrip_code: str):
-    alpha_vantage_api_key = os.getenv('ALPHA_VANTAGE_API_KEY')
-    if not alpha_vantage_api_key:
-        logger.error("Alpha Vantage API key not found in environment variables")
-        return []
-
-    url = f"https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers={scrip_code}&apikey={alpha_vantage_api_key}"
-
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return data.get('feed', [])
-                else:
-                    logger.error(f"Error fetching news data: HTTP {response.status}")
-                    return []
+        # Run the yfinance operation in a separate thread to avoid blocking
+        loop = asyncio.get_event_loop()
+        stock = await loop.run_in_executor(None, yf.Ticker, scrip_code)
+        news = await loop.run_in_executor(None, stock.news)
+        
+        # Process and return the news data
+        return [
+            {
+                'title': item['title'],
+                'link': item['link'],
+                'publisher': item['publisher'],
+                'published_date': item['providerPublishTime'],
+                'summary': item.get('summary', '')
+            }
+            for item in news
+        ]
     except Exception as e:
         logger.error(f"Error fetching news data for {scrip_code}: {str(e)}")
         return []
