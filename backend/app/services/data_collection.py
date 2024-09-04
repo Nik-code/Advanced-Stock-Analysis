@@ -87,23 +87,37 @@ async def fetch_process_store_data(scrip_code: str, time_frame: str = '1year'):
         logger.error(f"Skipping {scrip_code} due to missing data.")
 
 async def fetch_news_data(scrip_code: str):
-    # This is a placeholder function. You'll need to implement actual news fetching logic.
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"https://api.example.com/news/{scrip_code}") as response:
-            news_data = await response.json()
-    return news_data
+    alpha_vantage_api_key = os.getenv('ALPHA_VANTAGE_API_KEY')
+    if not alpha_vantage_api_key:
+        logger.error("Alpha Vantage API key not found in environment variables")
+        return []
+
+    url = f"https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers={scrip_code}&apikey={alpha_vantage_api_key}"
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data.get('feed', [])
+                else:
+                    logger.error(f"Error fetching news data: HTTP {response.status}")
+                    return []
+    except Exception as e:
+        logger.error(f"Error fetching news data for {scrip_code}: {str(e)}")
+        return []
 
 async def process_news_data(news_data):
     sentiments = []
     topics = []
     for article in news_data:
-        sentiment = llm_processor.analyze_sentiment(article['text'])
-        article_topics = llm_processor.extract_key_topics(article['text'])
+        sentiment = article.get('overall_sentiment_score', 0)
+        article_topics = article.get('topics', [])
         sentiments.append(sentiment)
-        topics.extend(article_topics)
+        topics.extend([topic['topic'] for topic in article_topics])
     
     return {
-        'sentiment': max(set(sentiments), key=sentiments.count),
+        'sentiment': sum(sentiments) / len(sentiments) if sentiments else 0,
         'topics': list(set(topics))
     }
 
