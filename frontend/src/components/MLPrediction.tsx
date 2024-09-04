@@ -18,12 +18,17 @@ const MLPrediction: React.FC<MLPredictionProps> = ({ stockCode, historicalData }
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.post(`http://localhost:8000/api/predict/${stockCode}`, historicalData.map(d => d.close));
-      setPredictions(response.data.predictions);
-      setPastPredictions(response.data.past_predictions);
+      const [predictionResponse, sentimentResponse] = await Promise.all([
+        axios.post(`http://localhost:8000/api/predict/${stockCode}`, historicalData.map(d => d.close)),
+        axios.get(`http://localhost:8000/api/sentiment/${stockCode}`)
+      ]);
+      setPredictions(predictionResponse.data.predictions);
+      setPastPredictions(predictionResponse.data.past_predictions);
+      setSentiment(sentimentResponse.data.sentiment);
+      setTopics(sentimentResponse.data.topics);
     } catch (error) {
-      console.error('Error fetching predictions:', error);
-      setError('Failed to fetch predictions. Please try again.');
+      console.error('Error fetching predictions or sentiment:', error);
+      setError('Failed to fetch predictions or sentiment. Please try again.');
     }
     setIsLoading(false);
   };
@@ -65,6 +70,12 @@ const MLPrediction: React.FC<MLPredictionProps> = ({ stockCode, historicalData }
       {error && <Text color="red.500" mb={4}>{error}</Text>}
       {predictions.length > 0 && (
         <Line data={chartData} options={{ responsive: true }} />
+      )}
+      {sentiment !== null && (
+        <Box mt={4}>
+          <Text fontWeight="bold">Sentiment: {sentiment.toFixed(2)}</Text>
+          <Text fontWeight="bold">Top Topics: {topics.join(', ')}</Text>
+        </Box>
       )}
     </Box>
   );
