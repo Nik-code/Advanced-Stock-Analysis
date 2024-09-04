@@ -1,34 +1,50 @@
-import transformers
-import torch
+from openai import OpenAI
+import logging
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-class LLaMAProcessor:
-    def __init__(self, model_id="meta-llama/Meta-Llama-3.1-8B-Instruct"):
-        self.pipeline = transformers.pipeline(
-            "text-generation",
-            model=model_id,
-            model_kwargs={"torch_dtype": torch.bfloat16},
-            device_map="auto",
-        )
-    
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+logger = logging.getLogger(__name__)
+
+class GPT4Processor:
+    def __init__(self):
+        logger.info("Initializing GPT4Processor")
+
     def process_text(self, messages):
-        outputs = self.pipeline(
-            messages,
-            max_new_tokens=256,
-        )
-        return outputs[0]["generated_text"]
+        logger.info(f"Processing text with GPT-4: {messages}")
+        try:
+            response = client.chat.completions.create(model="gpt-4o-mini",
+            messages=messages,
+            max_tokens=256,
+            n=1,
+            stop=None,
+            temperature=0.7)
+            generated_text = response.choices[0].message.content.strip()
+            logger.info(f"GPT-4 generated text: {generated_text}")
+            return generated_text
+        except Exception as e:
+            logger.error(f"Error processing text with GPT-4: {str(e)}")
+            raise
 
     def analyze_sentiment(self, text):
+        logger.info(f"Analyzing sentiment for text: {text[:100]}...")
         messages = [
-            {"role": "system", "content": "You are a financial analyst. Analyze the sentiment of the following text and respond with either 'positive', 'negative', or 'neutral'."},
+            {"role": "system", "content": "You are a financial analyst. Analyze the sentiment of the following text and respond with the sentiment (positive, negative, or neutral) followed by a brief explanation. Format your response as 'Sentiment: [sentiment]\nExplanation: [explanation]'"},
             {"role": "user", "content": text},
         ]
-        sentiment = self.process_text(messages)
-        return sentiment.strip().lower()
+        result = self.process_text(messages)
+        logger.info(f"Sentiment analysis result: {result}")
+        return result
 
-    def extract_key_topics(self, text):
+    def generate_summary(self, news_data):
+        logger.info("Generating summary for all news articles")
+        combined_text = "\n".join([f"Title: {article['title']}\nSummary: {article['summary']}" for article in news_data])
         messages = [
-            {"role": "system", "content": "You are a financial analyst. Extract the key topics from the following text and list them as comma-separated values."},
-            {"role": "user", "content": text},
+            {"role": "system", "content": "You are a financial analyst. Summarize the following news articles in terms of their potential impact on the stock market. Provide a concise summary that reflects the overall sentiment and key points."},
+            {"role": "user", "content": combined_text},
         ]
-        topics = self.process_text(messages)
-        return [topic.strip() for topic in topics.split(',')]
+        summary = self.process_text(messages)
+        logger.info(f"Generated summary: {summary}")
+        return summary
