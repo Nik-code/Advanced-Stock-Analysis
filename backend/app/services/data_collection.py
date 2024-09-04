@@ -7,11 +7,10 @@ import logging
 from .technical_indicators import calculate_rsi, calculate_sma, calculate_ema, calculate_macd, calculate_bollinger_bands, calculate_atr
 from ..db.influx_writer import write_stock_data_to_influxdb
 from ..db.influx_client import get_influxdb_client
-from .llm_integration import LLaMAProcessor
+from .llm_integration import GPT4Processor
 import aiohttp
 import yfinance as yf
 import asyncio
-from textblob import TextBlob
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,7 +18,7 @@ logger = logging.getLogger(__name__)
 zerodha_service = ZerodhaService()
 client = get_influxdb_client()
 
-llm_processor = LLaMAProcessor()
+llm_processor = GPT4Processor()
 
 async def fetch_historical_data(scrip_code: str, time_frame: str = '1year'):
     try:
@@ -81,7 +80,8 @@ async def fetch_process_store_data(scrip_code: str, time_frame: str = '1year'):
         
         # Add news analysis to the dataframe
         df['News_Sentiment'] = news_analysis['sentiment']
-        df['News_Topics'] = ','.join(news_analysis['topics'])
+        df['News_Explanation'] = news_analysis['explanation']
+        df['News_Summary'] = news_analysis['summary']
 
         # Write to InfluxDB
         write_stock_data_to_influxdb(df, scrip_code)
@@ -91,51 +91,54 @@ async def fetch_process_store_data(scrip_code: str, time_frame: str = '1year'):
 
 async def fetch_news_data(scrip_code: str):
     try:
-        # Run the yfinance operation in a separate thread to avoid blocking
+        logger.info(f"Fetching news data for {scrip_code} using yfinance")
         loop = asyncio.get_event_loop()
         stock = await loop.run_in_executor(None, yf.Ticker, scrip_code)
-        news = await loop.run_in_executor(None, stock.news)
+        news = await loop.run_in_executor(None, lambda: stock.news)
         
-        # Process and return the news data
-        return [
+        if not news or not isinstance(news, list):
+            logger.warning(f"No news data found for {scrip_code}")
+            return []
+        
+        processed_news = [
             {
-                'title': item['title'],
-                'link': item['link'],
-                'publisher': item['publisher'],
-                'published_date': item['providerPublishTime'],
+                'title': item.get('title', ''),
+                'link': item.get('link', ''),
+                'publisher': item.get('publisher', ''),
+                'published_date': item.get('providerPublishTime', ''),
                 'summary': item.get('summary', '')
             }
             for item in news
         ]
+        logger.info(f"Fetched {len(processed_news)} news articles for {scrip_code}")
+        return processed_news
     except Exception as e:
         logger.error(f"Error fetching news data for {scrip_code}: {str(e)}")
         return []
 
 async def process_news_data(news_data):
-    sentiments = []
-    topics = set()
+    logger.info(f"Processing {len(news_data)} news articles")
     
-    for article in news_data:
-        text = f"{article['title']} {article['summary']}"
-        
-        # Use LLaMAProcessor for sentiment analysis
-        sentiment = llm_processor.analyze_sentiment(text)
-        sentiments.append(sentiment)
-        
-        # Use LLaMAProcessor for keyword extraction
-        extracted_topics = llm_processor.extract_key_topics(text)
-        topics.update(extracted_topics)
+    combined_text = "\n".join([f"{article['title']} {article['summary']}" for article in news_data])
     
-    # Calculate average sentiment
-    if sentiments:
-        avg_sentiment = sum(map(lambda x: 1 if x == 'positive' else (-1 if x == 'negative' else 0), sentiments)) / len(sentiments)
-    else:
-        avg_sentiment = 0
+    sentiment_result = llm_processor.analyze_sentiment(combined_text)
+    summary = llm_processor.generate_summary(news_data)
     
-    return {
-        'sentiment': avg_sentiment,
-        'topics': list(topics)[:5]  # Limit to top 5 topics
+    # Parse the sentiment result
+    sentiment_lines = sentiment_result.split('\n')
+    sentiment = sentiment_lines[0].split(': ')[1].lower()
+    explanation = sentiment_lines[1].split(': ')[1]
+    
+    # Calculate numeric sentiment
+    sentiment_value = 1 if sentiment == 'positive' else (-1 if sentiment == 'negative' else 0)
+    
+    result = {
+        'sentiment': sentiment_value,
+        'explanation': explanation,
+        'summary': summary
     }
+    logger.info(f"Final sentiment analysis result: {result}")
+    return result
 
 async def update_influxdb_with_latest_data(scrip_code: str):
     try:
