@@ -76,12 +76,12 @@ async def fetch_process_store_data(scrip_code: str, time_frame: str = '1year'):
 
         # Fetch and process news data
         news_data = await fetch_news_data(scrip_code)
-        news_analysis = await process_news_data(news_data)
+        news_analysis = await process_news_data(news_data, df['close'].tolist())
         
         # Add news analysis to the dataframe
         df['News_Sentiment'] = news_analysis['sentiment']
         df['News_Explanation'] = news_analysis['explanation']
-        df['News_Summary'] = news_analysis['summary']
+        df['News_Summary'] = news_analysis['analysis']
 
         # Write to InfluxDB
         write_stock_data_to_influxdb(df, scrip_code)
@@ -119,17 +119,42 @@ async def fetch_news_data(scrip_code: str):
 async def process_news_data(news_data, lstm_prediction):
     logger.info(f"Processing {len(news_data)} news articles")
     
-    sentiment_score = llm_processor.analyze_sentiment(news_data)
-    sentiment_explanation = llm_processor.explain_sentiment(news_data, sentiment_score)
-    final_analysis = llm_processor.final_analysis(sentiment_score, sentiment_explanation, lstm_prediction)
+    sentiment_score, explanation = llm_processor.analyze_news_sentiment(news_data)
+    
+    # Fetch technical indicators
+    technical_indicators = await fetch_technical_indicators(news_data[0]['symbol'])
+    
+    final_analysis = llm_processor.final_analysis(sentiment_score, explanation, lstm_prediction, technical_indicators)
     
     result = {
         'sentiment': sentiment_score,
-        'explanation': sentiment_explanation,
+        'explanation': explanation,
         'analysis': final_analysis
     }
     logger.info(f"Final sentiment analysis result: {result}")
     return result
+
+
+async def fetch_technical_indicators(symbol):
+    historical_data = await fetch_historical_data(symbol, '1year')
+    if historical_data is None:
+        logger.error(f"No historical data found for {symbol}")
+        return None
+
+    close_prices = historical_data['close']
+    high_prices = historical_data['high']
+    low_prices = historical_data['low']
+
+    indicators = {
+        'sma_20': calculate_sma(close_prices, 20).iloc[-1],
+        'ema_50': calculate_ema(close_prices, 50).iloc[-1],
+        'rsi': calculate_rsi(close_prices).iloc[-1],
+        'macd': calculate_macd(close_prices)[0].iloc[-1],  # MACD line
+        'atr': calculate_atr(high_prices, low_prices, close_prices).iloc[-1]
+    }
+
+    return indicators
+
 
 async def update_influxdb_with_latest_data(scrip_code: str):
     try:
