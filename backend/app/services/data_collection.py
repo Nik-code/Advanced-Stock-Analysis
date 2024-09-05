@@ -102,6 +102,7 @@ async def fetch_news_data(scrip_code: str):
         
         processed_news = [
             {
+                'symbol': scrip_code,
                 'title': item.get('title', ''),
                 'link': item.get('link', ''),
                 'publisher': item.get('publisher', ''),

@@ -64,7 +64,7 @@ async def get_historical_data(code: str, timeFrame: str = '1year'):
         return data.to_dict(orient='records')
     except Exception as e:
         logger.error(f"Error fetching historical data for {code}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error. Please try again later.")
 
 
 @app.get("/api/login")
@@ -75,10 +75,15 @@ async def login():
 
 @app.get("/api/callback")
 async def callback(request: Request):
+    # Log the full request details to check for the request_token
+    logger.info(f"Request params: {request.query_params}")
+
     params = dict(request.query_params)
     request_token = params.get("request_token")
+
     if not request_token:
         raise HTTPException(status_code=400, detail="No request token provided")
+
     try:
         access_token = zerodha_service.generate_session(request_token)
         zerodha_service.set_access_token(access_token)

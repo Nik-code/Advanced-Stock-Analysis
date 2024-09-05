@@ -3,6 +3,7 @@ import { Box, VStack, Text, Button, Spinner } from '@chakra-ui/react';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import ReactMarkdown from 'react-markdown';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -51,7 +52,7 @@ const MLPrediction: React.FC<MLPredictionProps> = ({ stockCode, historicalData }
       },
       {
         label: 'Past Predictions',
-        data: pastPredictions.length > 0 ? [...Array(60 - pastPredictions.length).fill(null), ...pastPredictions] : [],
+        data: pastPredictions.length > 0 ? [...Array(Math.max(0, 60 - pastPredictions.length)).fill(null), ...pastPredictions.slice(-60), ...Array(7).fill(null)] : [],
         borderColor: 'rgb(255, 99, 132)',
         tension: 0.1
       },
@@ -77,6 +78,7 @@ const MLPrediction: React.FC<MLPredictionProps> = ({ stockCode, historicalData }
     },
   };
 
+
   return (
     <Box>
       <Button onClick={handlePrediction} isLoading={isLoading}>
@@ -86,7 +88,8 @@ const MLPrediction: React.FC<MLPredictionProps> = ({ stockCode, historicalData }
       {sentiment !== null && (
         <VStack align="start" spacing={4} mt={4}>
           <Text fontWeight="bold">Sentiment Score: {sentiment.toFixed(2)}</Text>
-          <Text fontWeight="bold">Explanation: {explanation}</Text>
+          <Text fontWeight="bold">Explanation:</Text>
+          <Text>{explanation}</Text>
           <Text fontWeight="bold">Analysis:</Text>
           <Text>{analysis}</Text>
           <Text fontWeight="bold">LSTM Prediction Chart:</Text>
