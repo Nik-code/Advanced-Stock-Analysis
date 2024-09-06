@@ -15,8 +15,7 @@ class ARIMAStockPredictor:
     def predict(self, steps):
         return self.model_fit.forecast(steps)
 
-    def evaluate(self, y_test):
-        predictions = self.predict(len(y_test))
+    def evaluate(self, y_test, predictions):
         mae = mean_absolute_error(y_test, predictions)
         rmse = np.sqrt(mean_squared_error(y_test, predictions))
         return mae, rmse
