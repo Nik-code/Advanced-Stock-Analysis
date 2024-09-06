@@ -226,7 +226,7 @@ async def predict_stock(stock_code: str, data: List[float]):
         data = np.array(data).reshape(-1, 1)
         scaled_data = scaler.transform(data)
         
-        # Generate past predictions
+        # Generate past predictions using a rolling window
         past_predictions = []
         for i in range(60, len(scaled_data)):
             X = np.array([scaled_data[i-60:i]])
@@ -235,19 +235,36 @@ async def predict_stock(stock_code: str, data: List[float]):
         
         past_predictions = scaler.inverse_transform(np.array(past_predictions).reshape(-1, 1))
         
-        # Generate future predictions
+        # Generate future predictions with confidence intervals
         future_predictions = []
-        for _ in range(7):  # Predict next 7 days
-            X = np.array([scaled_data[-60:]])
-            prediction = predictor.predict(X)
-            future_predictions.append(prediction[0][0])
-            scaled_data = np.vstack((scaled_data, prediction))
-        
+        confidence_intervals = []
+        num_simulations = 100
+        forecast_horizon = 7
+
+        for _ in range(forecast_horizon):
+            simulations = []
+            for _ in range(num_simulations):
+                X = np.array([scaled_data[-60:]])
+                prediction = predictor.predict(X)
+                simulations.append(prediction[0][0])
+                noise = np.random.normal(0, 0.01)  # Add some noise for variability
+                scaled_data = np.vstack((scaled_data, prediction + noise))
+            
+            mean_prediction = np.mean(simulations)
+            ci_lower = np.percentile(simulations, 5)
+            ci_upper = np.percentile(simulations, 95)
+            
+            future_predictions.append(mean_prediction)
+            confidence_intervals.append((ci_lower, ci_upper))
+
         future_predictions = scaler.inverse_transform(np.array(future_predictions).reshape(-1, 1))
+        confidence_intervals = scaler.inverse_transform(np.array(confidence_intervals))
+        
         logger.info(f"Successfully generated predictions for {stock_code}")
         
         return {
             "predictions": future_predictions.flatten().tolist(),
+            "confidence_intervals": confidence_intervals.tolist(),
             "past_predictions": past_predictions.flatten().tolist()
         }
     except Exception as e:
