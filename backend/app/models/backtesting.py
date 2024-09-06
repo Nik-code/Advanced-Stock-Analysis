@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from app.models.lstm_model import LSTMStockPredictor
+from app.models.arima_model import ARIMAStockPredictor
 import joblib
 import os
 
@@ -58,6 +59,55 @@ def backtest_lstm_model(stock_code, historical_data, investment_amount=10000, th
         portfolio_values.append(portfolio_value)
 
     final_portfolio_value = cash + shares * actual_prices[-1][0]
+    total_return = (final_portfolio_value - investment_amount) / investment_amount * 100
+    
+    return {
+        'initial_investment': investment_amount,
+        'final_portfolio_value': final_portfolio_value,
+        'total_return_percentage': total_return,
+        'number_of_trades': len(trades),
+        'trades': trades,
+        'portfolio_values': portfolio_values
+    }
+
+def backtest_arima_model(stock_code, historical_data, investment_amount=10000, threshold=0.01, transaction_cost=0.001):
+    model_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'models')
+    model_path = os.path.join(model_dir, f'{stock_code}_arima_model.pkl')
+
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"Model not found for {stock_code}")
+
+    predictor = joblib.load(model_path)
+
+    close_prices = historical_data['close'].values
+
+    cash = investment_amount
+    shares = 0
+    trades = []
+    portfolio_values = [investment_amount]
+
+    for i in range(1, len(close_prices)):
+        current_price = close_prices[i]
+        predicted_price = predictor.predict(1)[0]
+
+        if predicted_price > current_price * (1 + threshold) and cash > current_price:
+            shares_to_buy = (cash * (1 - transaction_cost)) // current_price
+            if shares_to_buy > 0:
+                shares += shares_to_buy
+                cash -= shares_to_buy * current_price * (1 + transaction_cost)
+                trades.append(('buy', shares_to_buy, current_price))
+        elif predicted_price < current_price * (1 - threshold) and shares > 0:
+            cash += shares * current_price * (1 - transaction_cost)
+            trades.append(('sell', shares, current_price))
+            shares = 0
+
+        portfolio_value = cash + shares * current_price
+        portfolio_values.append(portfolio_value)
+
+        # Update the model with the actual price
+        predictor.model_fit = predictor.model_fit.append([current_price])
+
+    final_portfolio_value = cash + shares * close_prices[-1]
     total_return = (final_portfolio_value - investment_amount) / investment_amount * 100
     
     return {

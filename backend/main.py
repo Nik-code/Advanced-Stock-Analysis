@@ -15,7 +15,7 @@ from app.models.lstm_model import LSTMStockPredictor
 import joblib
 from app.services.llm_integration import GPT4Processor
 import xml.etree.ElementTree as ET
-from app.models.backtesting import backtest_lstm_model
+from app.models.backtesting import backtest_lstm_model, backtest_arima_model
 from app.models.arima_model import ARIMAStockPredictor
 
 load_dotenv()
@@ -320,6 +320,24 @@ async def backtest_stock(stock_code: str, days: str = '1year'):
         logger.error(f"Error during backtesting for {stock_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error during backtesting for {stock_code}: {str(e)}")
     
+
+@app.post("/api/backtest_arima/{stock_code}")
+async def backtest_stock_arima(stock_code: str, days: str = '1year'):
+    try:
+        logger.info(f"Received ARIMA backtesting request for {stock_code}")
+        historical_data = await fetch_historical_data(stock_code, days)
+        
+        if historical_data is None:
+            raise HTTPException(status_code=404, detail=f"No data found for stock symbol {stock_code}")
+
+        backtesting_results = backtest_arima_model(stock_code, historical_data)
+        
+        logger.info(f"Successfully completed ARIMA backtesting for {stock_code}")
+        
+        return backtesting_results
+    except Exception as e:
+        logger.error(f"Error during ARIMA backtesting for {stock_code}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error during ARIMA backtesting for {stock_code}: {str(e)}")
 
 
 # New endpoint to update data in InfluxDB
