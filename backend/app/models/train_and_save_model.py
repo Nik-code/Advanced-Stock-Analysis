@@ -30,6 +30,7 @@ PAUSE_DURATION = 60  # 1 minute
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 async def get_data_for_stock(stock_code, time_frame='5years'):
+    time.sleep(0.7) # 0.7 seconds delay to avoid rate limiting
     try:
         data = await fetch_historical_data(stock_code, time_frame)
         if data is not None and not data.empty:
