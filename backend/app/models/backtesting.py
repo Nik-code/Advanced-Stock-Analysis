@@ -2,9 +2,11 @@ import os
 import sys
 import numpy as np
 from app.models.lstm_model import LSTMStockPredictor
-from app.models.arima_model import ARIMAStockPredictor
+# from .arima_model import ARIMAStockPredictor
 import joblib
 import logging
+from statsmodels.tsa.arima.model import ARIMA
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 # Add the project root directory to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -81,63 +83,80 @@ def backtest_lstm_model(stock_code, historical_data, investment_amount=10000, th
 
 
 def backtest_arima_model(stock_code, historical_data, investment_amount=10000, threshold=0.01, transaction_cost=0.001):
-    try:
-        model_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'models')
-        model_path = os.path.join(model_dir, f'{stock_code}_arima_model.pkl')
+    # Extract only the closing prices
+    close_prices = historical_data['close'].values
 
-        logger.debug(f"Current working directory: {os.getcwd()}")
-        logger.debug(f"Model directory: {model_dir}")
-        logger.debug(f"Model path: {model_path}")
-        logger.debug(f"Model exists: {os.path.exists(model_path)}")
+    # Split the data into training and testing sets
+    train_size = int(len(close_prices) * 0.8)
+    train, test = close_prices[:train_size], close_prices[train_size:]
 
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Model not found for {stock_code}")
+    # Initialize and train the ARIMA model
+    arima_model = ARIMAStockPredictor()
+    arima_model.train(train)
 
-        predictor = joblib.load(model_path)
-        logger.debug(f"Predictor type: {type(predictor)}")
+    # Make predictions
+    predictions = arima_model.predict(len(test))
 
-        if not isinstance(predictor, ARIMAStockPredictor):
-            raise TypeError(f"Loaded model is not an instance of ARIMAStockPredictor")
+    # Initialize portfolio variables
+    cash = investment_amount
+    shares = 0
+    trades = []
+    portfolio_values = [investment_amount]
 
-        close_prices = historical_data['close'].values
+    for i in range(1, len(test)):
+        current_price = test[i]
+        predicted_price = predictions[i]
+        prev_price = test[i-1]
 
-        cash = investment_amount
-        shares = 0
-        trades = []
-        portfolio_values = [investment_amount]
+        if predicted_price > prev_price * (1 + threshold) and cash > current_price:
+            shares_to_buy = (cash * (1 - transaction_cost)) // current_price
+            if shares_to_buy > 0:
+                shares += shares_to_buy
+                cash -= shares_to_buy * current_price * (1 + transaction_cost)
+                trades.append(('buy', shares_to_buy, current_price))
+        elif predicted_price < prev_price * (1 - threshold) and shares > 0:
+            cash += shares * current_price * (1 - transaction_cost)
+            trades.append(('sell', shares, current_price))
+            shares = 0
 
-        for i in range(1, len(close_prices)):
-            current_price = close_prices[i]
-            predicted_price = predictor.predict(steps=1)[0]
+        portfolio_value = cash + shares * current_price
+        portfolio_values.append(portfolio_value)
 
-            if predicted_price > current_price * (1 + threshold) and cash > current_price:
-                shares_to_buy = int((cash * (1 - transaction_cost)) // current_price)
-                if shares_to_buy > 0:
-                    shares += shares_to_buy
-                    cash -= shares_to_buy * current_price * (1 + transaction_cost)
-                    trades.append(('buy', shares_to_buy, current_price))
-            elif predicted_price < current_price * (1 - threshold) and shares > 0:
-                cash += shares * current_price * (1 - transaction_cost)
-                trades.append(('sell', shares, current_price))
-                shares = 0
+    final_portfolio_value = cash + shares * test[-1]
+    total_return = (final_portfolio_value - investment_amount) / investment_amount * 100
 
-            portfolio_value = cash + shares * current_price
-            portfolio_values.append(portfolio_value)
+    # Calculate performance metrics
+    mae, rmse = arima_model.evaluate(test)
 
-            # Update the model with the actual price
-            predictor.train(close_prices[:i+1])
+    return {
+        'stock_code': stock_code,
+        'initial_investment': investment_amount,
+        'final_portfolio_value': final_portfolio_value,
+        'total_return_percentage': total_return,
+        'number_of_trades': len(trades),
+        'trades': trades,
+        'portfolio_values': portfolio_values,
+        'mae': mae,
+        'rmse': rmse,
+        'predictions': predictions.tolist(),
+        'actual_values': test.tolist()
+    }
 
-        final_portfolio_value = cash + shares * close_prices[-1]
-        total_return = (final_portfolio_value - investment_amount) / investment_amount * 100
-        
-        return {
-            'initial_investment': investment_amount,
-            'final_portfolio_value': final_portfolio_value,
-            'total_return_percentage': total_return,
-            'number_of_trades': len(trades),
-            'trades': trades,
-            'portfolio_values': portfolio_values
-        }
-    except Exception as e:
-        logger.error(f"Error in backtest_arima_model: {str(e)}")
-        raise
+
+class ARIMAStockPredictor:
+    def __init__(self, order=(1, 1, 1)):
+        self.order = order
+        self.model = None
+
+    def train(self, data):
+        self.model = ARIMA(data, order=self.order)
+        self.model_fit = self.model.fit()
+
+    def predict(self, steps):
+        return self.model_fit.forecast(steps)
+
+    def evaluate(self, y_test):
+        predictions = self.predict(len(y_test))
+        mae = mean_absolute_error(y_test, predictions)
+        rmse = np.sqrt(mean_squared_error(y_test, predictions))
+        return mae, rmse

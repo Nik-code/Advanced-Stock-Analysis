@@ -16,7 +16,6 @@ import joblib
 from app.services.llm_integration import GPT4Processor
 import xml.etree.ElementTree as ET
 from app.models.backtesting import backtest_lstm_model, backtest_arima_model
-from app.models.arima_model import ARIMAStockPredictor
 
 load_dotenv()
 
@@ -152,12 +151,13 @@ async def get_realtime_data(symbol: str):
         logger.error(f"Error fetching real-time data for {symbol}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/market/overview")
 async def get_market_overview(limit: int = 10):
     try:
         # This is a placeholder. You should replace it with actual top stocks from your data
         top_stocks = ["RELIANCE", "TCS", "HDFCBANK", "INFY", "ICICIBANK", "HINDUNILVR", "HDFC", "SBIN", "BHARTIARTL", "ITC"][:limit]
-        
+
         overview_data = []
         for symbol in top_stocks:
             quote = zerodha_service.get_quote(f"BSE:{symbol}")
@@ -169,7 +169,7 @@ async def get_market_overview(limit: int = 10):
                     "change": stock_data.get("change"),
                     "change_percent": stock_data.get("change_percent")
                 })
-        
+
         return overview_data
     except Exception as e:
         logger.error(f"Error fetching market overview: {str(e)}")
@@ -217,19 +217,19 @@ async def predict_stock(stock_code: str, data: List[float]):
         lstm_model_path = os.path.join(model_dir, f'{stock_code}_lstm_model.h5')
         arima_model_path = os.path.join(model_dir, f'{stock_code}_arima_model.pkl')
         scaler_path = os.path.join(model_dir, f'{stock_code}_scaler.pkl')
-        
+
         if not os.path.exists(lstm_model_path) or not os.path.exists(arima_model_path) or not os.path.exists(scaler_path):
             logger.error(f"Models or scaler not found for {stock_code}")
             raise HTTPException(status_code=404, detail=f"Models not found for {stock_code}")
-        
+
         lstm_predictor = LSTMStockPredictor(input_shape=(60, 1))
         lstm_predictor.load_model(lstm_model_path)
         arima_predictor = joblib.load(arima_model_path)
         scaler = joblib.load(scaler_path)
-        
+
         data = np.array(data).reshape(-1, 1)
         scaled_data = scaler.transform(data)
-        
+
         # Generate past predictions using a rolling window
         past_predictions_lstm = []
         past_predictions_arima = []
