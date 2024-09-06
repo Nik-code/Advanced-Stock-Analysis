@@ -9,6 +9,7 @@ from ..db.influx_writer import write_stock_data_to_influxdb
 from ..db.influx_client import get_influxdb_client
 from .llm_integration import GPT4Processor
 import aiohttp
+from bs4 import BeautifulSoup
 import yfinance as yf
 import asyncio
 
@@ -89,49 +90,107 @@ async def fetch_process_store_data(scrip_code: str, time_frame: str = '1year'):
     else:
         logger.error(f"Skipping {scrip_code} due to missing data.")
 
+
 async def fetch_news_data(scrip_code: str):
     try:
-        logger.info(f"Fetching news data for {scrip_code} using yfinance")
-        loop = asyncio.get_event_loop()
-        stock = await loop.run_in_executor(None, yf.Ticker, scrip_code)
-        news = await loop.run_in_executor(None, lambda: stock.news)
+        logger.info(f"Fetching news data for {scrip_code} from Yahoo Finance")
         
-        if not news or not isinstance(news, list):
-            logger.warning(f"No news data found for {scrip_code}")
-            return []
+        url = f"https://finance.yahoo.com/quote/{scrip_code}.NS/"
         
-        processed_news = [
-            {
-                'symbol': scrip_code,
-                'title': item.get('title', ''),
-                'link': item.get('link', ''),
-                'publisher': item.get('publisher', ''),
-                'published_date': item.get('providerPublishTime', ''),
-                'summary': item.get('summary', '')
-            }
-            for item in news
-        ]
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if response.status != 200:
+                    logger.error(f"Failed to fetch Yahoo Finance page for {scrip_code}. Status code: {response.status}")
+                    return []
+                
+                html_content = await response.text()
+                soup = BeautifulSoup(html_content, 'html.parser')
+                
+                # Find the news section on the Yahoo Finance page
+                news_section = soup.find('section', {'id': 'quoteNewsStream-0-Stream'})
+                if not news_section:
+                    logger.warning(f"No news section found for {scrip_code} on Yahoo Finance.")
+                    return []
+                
+                news_items = news_section.find_all('li', {'class': 'js-stream-content'})
+                if not news_items:
+                    logger.warning(f"No news items found for {scrip_code} on Yahoo Finance.")
+                    return []
+
+                # Process each news item
+                processed_news = []
+                for item in news_items:
+                    title_element = item.find('h3')
+                    if not title_element:
+                        continue
+
+                    title = title_element.get_text(strip=True)
+                    link = title_element.find('a')['href']
+                    link = f"https://finance.yahoo.com{link}" if link.startswith('/') else link
+                    publisher_element = item.find('span', {'class': 'C(#959595)'})
+                    publisher = publisher_element.get_text(strip=True) if publisher_element else "Unknown Publisher"
+                    published_date_element = item.find('time')
+                    published_date = published_date_element['datetime'] if published_date_element else "Unknown Date"
+
+                    processed_news.append({
+                        'symbol': f"{scrip_code}.NS",
+                        'title': title,
+                        'link': link,
+                        'publisher': publisher,
+                        'published_date': published_date,
+                        'summary': ''  # Yahoo Finance doesn't always provide a summary, but you can extract it if available
+                    })
+        
+        if not processed_news:
+            logger.warning(f"No relevant Indian news found for {scrip_code}")
+        
         logger.info(f"Fetched {len(processed_news)} news articles for {scrip_code}")
         return processed_news
     except Exception as e:
         logger.error(f"Error fetching news data for {scrip_code}: {str(e)}")
         return []
 
-async def process_news_data(news_data, lstm_prediction):
+
+async def process_news_data(news_data, lstm_prediction, symbol, historical_data):
+    if not news_data or len(news_data) == 0:
+        logger.warning("No news data to process, defaulting sentiment to 0.")
+
+        # Default values if no news data is present
+        sentiment_score = 0
+        explanation = 'No News Data found'
+
+        # Fetch technical indicators even without news data
+        technical_indicators = await fetch_technical_indicators(symbol)
+
+        # Perform final analysis based on other information
+        final_analysis = llm_processor.final_analysis(sentiment_score, explanation, lstm_prediction,
+                                                      technical_indicators, historical_data)
+
+        result = {
+            'sentiment': sentiment_score,
+            'explanation': explanation,
+            'analysis': final_analysis
+        }
+        logger.info(f"Final sentiment analysis result without news data: {result}")
+        return result
+
     logger.info(f"Processing {len(news_data)} news articles")
-    
+
+    # Analyze sentiment using the news data
     sentiment_score, explanation = llm_processor.analyze_news_sentiment(news_data)
-    
-    # Fetch technical indicators
+
+    # Fetch technical indicators using the symbol from the news data
     technical_indicators = await fetch_technical_indicators(news_data[0]['symbol'])
-    
-    final_analysis = llm_processor.final_analysis(sentiment_score, explanation, lstm_prediction, technical_indicators)
-    
+
+    # Perform final analysis combining sentiment score, explanation, LSTM prediction, and technical indicators
+    final_analysis = llm_processor.final_analysis(sentiment_score, explanation, lstm_prediction, technical_indicators, historical_data)
+
     result = {
         'sentiment': sentiment_score,
         'explanation': explanation,
         'analysis': final_analysis
     }
+
     logger.info(f"Final sentiment analysis result: {result}")
     return result
 
