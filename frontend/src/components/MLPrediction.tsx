@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, VStack, Text, Button, Spinner } from '@chakra-ui/react';
+import { Box, VStack, Text, Button, Spinner, Heading, UnorderedList, OrderedList, ListItem } from '@chakra-ui/react';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
@@ -78,6 +78,15 @@ const MLPrediction: React.FC<MLPredictionProps> = ({ stockCode, historicalData }
     },
   };
 
+  const MarkdownComponents = {
+    p: (props: any) => <Text mb={2} {...props} />,
+    h1: (props: any) => <Heading as="h1" size="xl" mt={4} mb={2} {...props} />,
+    h2: (props: any) => <Heading as="h2" size="lg" mt={3} mb={2} {...props} />,
+    h3: (props: any) => <Heading as="h3" size="md" mt={2} mb={1} {...props} />,
+    ul: (props: any) => <UnorderedList mt={2} mb={2} pl={4} {...props} />,
+    ol: (props: any) => <OrderedList mt={2} mb={2} pl={4} {...props} />,
+    li: (props: any) => <ListItem {...props} />,
+  };
 
   return (
     <Box>
@@ -91,7 +100,9 @@ const MLPrediction: React.FC<MLPredictionProps> = ({ stockCode, historicalData }
           <Text fontWeight="bold">Explanation:</Text>
           <Text>{explanation}</Text>
           <Text fontWeight="bold">Analysis:</Text>
-          <Text>{analysis}</Text>
+          <Box width="100%">
+            <ReactMarkdown components={MarkdownComponents}>{analysis}</ReactMarkdown>
+          </Box>
           <Text fontWeight="bold">LSTM Prediction Chart:</Text>
           {historicalData.length > 0 && (
             <Box width="100%" height="400px">
