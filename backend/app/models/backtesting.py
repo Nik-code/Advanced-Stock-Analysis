@@ -1,12 +1,9 @@
 import os
 import sys
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
 from app.models.lstm_model import LSTMStockPredictor
 from app.models.arima_model import ARIMAStockPredictor
 import joblib
-import pandas as pd
-from sklearn.metrics import mean_absolute_error, mean_squared_error
 import logging
 
 # Add the project root directory to the Python path
@@ -16,6 +13,7 @@ sys.path.append(project_root)
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
 
 def backtest_lstm_model(stock_code, historical_data, investment_amount=10000, threshold=0.01, transaction_cost=0.001):
     model_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'models')
