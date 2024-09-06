@@ -319,7 +319,7 @@ async def backtest_stock(stock_code: str, days: str = '1year'):
     except Exception as e:
         logger.error(f"Error during backtesting for {stock_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error during backtesting for {stock_code}: {str(e)}")
-    
+
 
 @app.post("/api/backtest_arima/{stock_code}")
 async def backtest_stock_arima(stock_code: str, days: str = '1year'):

@@ -1,10 +1,21 @@
+import os
+import sys
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from app.models.lstm_model import LSTMStockPredictor
 from app.models.arima_model import ARIMAStockPredictor
 import joblib
-import os
+import pandas as pd
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+import logging
 
+# Add the project root directory to the Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.append(project_root)
+
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def backtest_lstm_model(stock_code, historical_data, investment_amount=10000, threshold=0.01, transaction_cost=0.001):
     model_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'models')
@@ -70,51 +81,65 @@ def backtest_lstm_model(stock_code, historical_data, investment_amount=10000, th
         'portfolio_values': portfolio_values
     }
 
+
 def backtest_arima_model(stock_code, historical_data, investment_amount=10000, threshold=0.01, transaction_cost=0.001):
-    model_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'models')
-    model_path = os.path.join(model_dir, f'{stock_code}_arima_model.pkl')
+    try:
+        model_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'models')
+        model_path = os.path.join(model_dir, f'{stock_code}_arima_model.pkl')
 
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Model not found for {stock_code}")
+        logger.debug(f"Current working directory: {os.getcwd()}")
+        logger.debug(f"Model directory: {model_dir}")
+        logger.debug(f"Model path: {model_path}")
+        logger.debug(f"Model exists: {os.path.exists(model_path)}")
 
-    predictor = joblib.load(model_path)
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"Model not found for {stock_code}")
 
-    close_prices = historical_data['close'].values
+        predictor = joblib.load(model_path)
+        logger.debug(f"Predictor type: {type(predictor)}")
 
-    cash = investment_amount
-    shares = 0
-    trades = []
-    portfolio_values = [investment_amount]
+        if not isinstance(predictor, ARIMAStockPredictor):
+            raise TypeError(f"Loaded model is not an instance of ARIMAStockPredictor")
 
-    for i in range(1, len(close_prices)):
-        current_price = close_prices[i]
-        predicted_price = predictor.predict(1)[0]
+        close_prices = historical_data['close'].values
 
-        if predicted_price > current_price * (1 + threshold) and cash > current_price:
-            shares_to_buy = (cash * (1 - transaction_cost)) // current_price
-            if shares_to_buy > 0:
-                shares += shares_to_buy
-                cash -= shares_to_buy * current_price * (1 + transaction_cost)
-                trades.append(('buy', shares_to_buy, current_price))
-        elif predicted_price < current_price * (1 - threshold) and shares > 0:
-            cash += shares * current_price * (1 - transaction_cost)
-            trades.append(('sell', shares, current_price))
-            shares = 0
+        cash = investment_amount
+        shares = 0
+        trades = []
+        portfolio_values = [investment_amount]
 
-        portfolio_value = cash + shares * current_price
-        portfolio_values.append(portfolio_value)
+        for i in range(1, len(close_prices)):
+            current_price = close_prices[i]
+            predicted_price = predictor.predict(steps=1)[0]
 
-        # Update the model with the actual price
-        predictor.model_fit = predictor.model_fit.append([current_price])
+            if predicted_price > current_price * (1 + threshold) and cash > current_price:
+                shares_to_buy = int((cash * (1 - transaction_cost)) // current_price)
+                if shares_to_buy > 0:
+                    shares += shares_to_buy
+                    cash -= shares_to_buy * current_price * (1 + transaction_cost)
+                    trades.append(('buy', shares_to_buy, current_price))
+            elif predicted_price < current_price * (1 - threshold) and shares > 0:
+                cash += shares * current_price * (1 - transaction_cost)
+                trades.append(('sell', shares, current_price))
+                shares = 0
 
-    final_portfolio_value = cash + shares * close_prices[-1]
-    total_return = (final_portfolio_value - investment_amount) / investment_amount * 100
-    
-    return {
-        'initial_investment': investment_amount,
-        'final_portfolio_value': final_portfolio_value,
-        'total_return_percentage': total_return,
-        'number_of_trades': len(trades),
-        'trades': trades,
-        'portfolio_values': portfolio_values
-    }
+            portfolio_value = cash + shares * current_price
+            portfolio_values.append(portfolio_value)
+
+            # Update the model with the actual price
+            predictor.train(close_prices[:i+1])
+
+        final_portfolio_value = cash + shares * close_prices[-1]
+        total_return = (final_portfolio_value - investment_amount) / investment_amount * 100
+        
+        return {
+            'initial_investment': investment_amount,
+            'final_portfolio_value': final_portfolio_value,
+            'total_return_percentage': total_return,
+            'number_of_trades': len(trades),
+            'trades': trades,
+            'portfolio_values': portfolio_values
+        }
+    except Exception as e:
+        logger.error(f"Error in backtest_arima_model: {str(e)}")
+        raise
