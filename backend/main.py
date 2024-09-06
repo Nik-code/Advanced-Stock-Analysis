@@ -240,15 +240,15 @@ async def predict_stock(stock_code: str, data: List[float]):
         confidence_intervals = []
         num_simulations = 100
         forecast_horizon = 7
+        last_sequence = scaled_data[-60:]
 
         for _ in range(forecast_horizon):
             simulations = []
             for _ in range(num_simulations):
-                X = np.array([scaled_data[-60:]])
+                X = np.array([last_sequence])
                 prediction = predictor.predict(X)
                 simulations.append(prediction[0][0])
-                noise = np.random.normal(0, 0.01)  # Add some noise for variability
-                scaled_data = np.vstack((scaled_data, prediction + noise))
+                last_sequence = np.append(last_sequence[1:], prediction[0][0])
             
             mean_prediction = np.mean(simulations)
             ci_lower = np.percentile(simulations, 5)
