@@ -14,6 +14,7 @@ from typing import List
 from app.models.lstm_model import LSTMStockPredictor
 import joblib
 from app.services.llm_integration import GPT4Processor
+import xml.etree.ElementTree as ET
 
 load_dotenv()
 
@@ -301,6 +302,16 @@ async def get_sentiment(symbol: str):
         }
     except Exception as e:
         logger.error(f"Error analyzing sentiment for {symbol}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/test/news/{symbol}")
+async def test_fetch_news(symbol: str):
+    try:
+        news_data = await fetch_news_data(symbol)
+        return {"news": news_data}
+    except Exception as e:
+        logger.error(f"Error fetching news for {symbol}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -12,6 +12,8 @@ import aiohttp
 from bs4 import BeautifulSoup
 import yfinance as yf
 import asyncio
+import urllib.parse
+import xml.etree.ElementTree as ET
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -91,63 +93,38 @@ async def fetch_process_store_data(scrip_code: str, time_frame: str = '1year'):
         logger.error(f"Skipping {scrip_code} due to missing data.")
 
 
-async def fetch_news_data(scrip_code: str):
+async def fetch_news_data(scrip_code: str, limit: int = 5):
     try:
-        logger.info(f"Fetching news data for {scrip_code} from Yahoo Finance")
-        
-        url = f"https://finance.yahoo.com/quote/{scrip_code}.NS/"
-        
+        base_url = "https://news.google.com/rss/search"
+        query = urllib.parse.urlencode({"q": f"{scrip_code} stock"})
+        search_url = f"{base_url}?{query}&hl=en-IN&gl=IN&ceid=IN:en"
+
         async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
+            async with session.get(search_url) as response:
                 if response.status != 200:
-                    logger.error(f"Failed to fetch Yahoo Finance page for {scrip_code}. Status code: {response.status}")
+                    logger.error(f"Failed to fetch news for {scrip_code}. Status code: {response.status}")
                     return []
                 
-                html_content = await response.text()
-                soup = BeautifulSoup(html_content, 'html.parser')
-                
-                # Find the news section on the Yahoo Finance page
-                news_section = soup.find('section', {'id': 'quoteNewsStream-0-Stream'})
-                if not news_section:
-                    logger.warning(f"No news section found for {scrip_code} on Yahoo Finance.")
-                    return []
-                
-                news_items = news_section.find_all('li', {'class': 'js-stream-content'})
-                if not news_items:
-                    logger.warning(f"No news items found for {scrip_code} on Yahoo Finance.")
-                    return []
+                xml_content = await response.text()
+                root = ET.fromstring(xml_content)
 
-                # Process each news item
-                processed_news = []
-                for item in news_items:
-                    title_element = item.find('h3')
-                    if not title_element:
-                        continue
+                articles = []
+                for item in root.findall('.//item')[:limit]:
+                    title = item.find('title').text
+                    link = item.find('link').text
+                    pub_date = item.find('pubDate').text
+                    description = item.find('description').text
 
-                    title = title_element.get_text(strip=True)
-                    link = title_element.find('a')['href']
-                    link = f"https://finance.yahoo.com{link}" if link.startswith('/') else link
-                    publisher_element = item.find('span', {'class': 'C(#959595)'})
-                    publisher = publisher_element.get_text(strip=True) if publisher_element else "Unknown Publisher"
-                    published_date_element = item.find('time')
-                    published_date = published_date_element['datetime'] if published_date_element else "Unknown Date"
-
-                    processed_news.append({
-                        'symbol': f"{scrip_code}.NS",
+                    articles.append({
                         'title': title,
                         'link': link,
-                        'publisher': publisher,
-                        'published_date': published_date,
-                        'summary': ''  # Yahoo Finance doesn't always provide a summary, but you can extract it if available
+                        'published_time': pub_date,
+                        'summary': description[:200] + '...' if len(description) > 200 else description
                     })
-        
-        if not processed_news:
-            logger.warning(f"No relevant Indian news found for {scrip_code}")
-        
-        logger.info(f"Fetched {len(processed_news)} news articles for {scrip_code}")
-        return processed_news
+                
+                return articles
     except Exception as e:
-        logger.error(f"Error fetching news data for {scrip_code}: {str(e)}")
+        logger.error(f"Error fetching news for {scrip_code}: {str(e)}")
         return []
 
 
@@ -180,7 +157,7 @@ async def process_news_data(news_data, lstm_prediction, symbol, historical_data)
     sentiment_score, explanation = llm_processor.analyze_news_sentiment(news_data)
 
     # Fetch technical indicators using the symbol from the news data
-    technical_indicators = await fetch_technical_indicators(news_data[0]['symbol'])
+    technical_indicators = await fetch_technical_indicators(symbol)
 
     # Perform final analysis combining sentiment score, explanation, LSTM prediction, and technical indicators
     final_analysis = llm_processor.final_analysis(sentiment_score, explanation, lstm_prediction, technical_indicators, historical_data)
