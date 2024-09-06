@@ -2,6 +2,7 @@ import numpy as np
 from statsmodels.tsa.arima.model import ARIMA
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
+
 class ARIMAStockPredictor:
     def __init__(self, order=(1, 1, 1)):
         self.order = order

@@ -13,11 +13,14 @@ from sklearn.model_selection import train_test_split
 import joblib
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime, timedelta
+import traceback
 
-logging.basicConfig(level=logging.INFO)
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-PROGRESS_FILE = 'training_progress.json'
+PROGRESS_FILE = os.path.join(os.path.dirname(__file__), 'training_progress.json')
+
 
 async def get_data_for_stock(stock_code, time_frame='5years'):
     try:
@@ -31,6 +34,7 @@ async def get_data_for_stock(stock_code, time_frame='5years'):
         logger.error(f"Error fetching data for {stock_code}: {str(e)}")
     await asyncio.sleep(0.34)  # Sleep even if there's an error to maintain the rate limit
     return None
+
 
 def train_and_save_model_for_stock(stock_code, data):
     try:
@@ -73,22 +77,27 @@ def train_and_save_model_for_stock(stock_code, data):
         return stock_code, (lstm_mae, lstm_rmse), (arima_mae, arima_rmse)
     except Exception as e:
         logger.error(f"Error training models for {stock_code}: {str(e)}")
+        logger.error(traceback.format_exc())
         return stock_code, None, None
+
 
 def load_progress():
     if os.path.exists(PROGRESS_FILE):
         with open(PROGRESS_FILE, 'r') as f:
             return json.load(f)
-    return {'completed': [], 'last_index': 0}
+    return {'completed': [], 'last_index': 0, 'errors': []}
 
-def save_progress(completed, last_index):
+
+def save_progress(completed, last_index, errors):
     with open(PROGRESS_FILE, 'w') as f:
-        json.dump({'completed': completed, 'last_index': last_index}, f)
+        json.dump({'completed': completed, 'last_index': last_index, 'errors': errors}, f)
+
 
 async def train_models(stock_codes):
     progress = load_progress()
     completed = set(progress['completed'])
     start_index = progress['last_index']
+    errors = progress['errors']
     
     results = []
     total_stocks = len(stock_codes)
@@ -103,20 +112,28 @@ async def train_models(stock_codes):
                 futures.append(future)
             else:
                 logger.error(f"Skipping model training for {stock_code} due to missing data.")
+                errors.append(f"Missing data for {stock_code}")
             
             # Save progress after each stock is processed (whether successful or not)
             completed.add(stock_code)
-            save_progress(list(completed), i + 1)
+            save_progress(list(completed), i + 1, errors)
             logger.info(f"Progress: {len(completed)}/{total_stocks} stocks processed")
         
         for future in as_completed(futures):
             try:
                 result = future.result()
                 results.append(result)
+                logger.info(f"Completed training for {result[0]}")
             except Exception as e:
                 logger.error(f"Error processing future: {str(e)}")
+                logger.error(traceback.format_exc())
+                errors.append(f"Error processing {result[0]}: {str(e)}")
+            
+            # Update progress after each future is completed
+            save_progress(list(completed), start_index + len(completed), errors)
     
     return results
+
 
 def should_retrain(model_path, retrain_interval_days=30):
     if not os.path.exists(model_path):
@@ -124,40 +141,48 @@ def should_retrain(model_path, retrain_interval_days=30):
     last_modified = datetime.fromtimestamp(os.path.getmtime(model_path))
     return (datetime.now() - last_modified) > timedelta(days=retrain_interval_days)
 
+
 def delete_existing_models(model_dir):
     for file in os.listdir(model_dir):
         if file.endswith(('.h5', '.pkl')):
             os.remove(os.path.join(model_dir, file))
     logger.info("Deleted existing models")
 
+
 async def main():
-    csv_path = os.path.join(os.path.dirname(__file__), '..', '..', 'scripts', 'indian_stocks.csv')
-    stocks_df = pd.read_csv(csv_path)
-    stock_codes = stocks_df['tradingsymbol'].tolist()
+    try:
+        csv_path = os.path.join(os.path.dirname(__file__), '..', '..', 'scripts', 'indian_stocks.csv')
+        stocks_df = pd.read_csv(csv_path)
+        stock_codes = stocks_df['tradingsymbol'].tolist()
 
-    model_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'models')
-    
-    # Uncomment the following line if you want to delete existing models before training
-    # delete_existing_models(model_dir)
+        model_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'models')
+        
+        # Uncomment the following line if you want to delete existing models before training
+        # delete_existing_models(model_dir)
 
-    stocks_to_train = [
-        stock_code for stock_code in stock_codes
-        if should_retrain(os.path.join(model_dir, f'{stock_code}_lstm_model.h5'))
-    ]
+        stocks_to_train = [
+            stock_code for stock_code in stock_codes
+            if should_retrain(os.path.join(model_dir, f'{stock_code}_lstm_model.h5'))
+        ]
 
-    if stocks_to_train:
-        results = await train_models(stocks_to_train)
-        for stock_code, lstm_metrics, arima_metrics in results:
-            if lstm_metrics and arima_metrics:
-                logger.info(f"Training completed for {stock_code} - LSTM: MAE: {lstm_metrics[0]}, RMSE: {lstm_metrics[1]} - ARIMA: MAE: {arima_metrics[0]}, RMSE: {arima_metrics[1]}")
-            else:
-                logger.warning(f"Training failed for {stock_code}")
-    else:
-        logger.info("No models need retraining at this time.")
+        if stocks_to_train:
+            results = await train_models(stocks_to_train)
+            for stock_code, lstm_metrics, arima_metrics in results:
+                if lstm_metrics and arima_metrics:
+                    logger.info(f"Training completed for {stock_code} - LSTM: MAE: {lstm_metrics[0]}, RMSE: {lstm_metrics[1]} - ARIMA: MAE: {arima_metrics[0]}, RMSE: {arima_metrics[1]}")
+                else:
+                    logger.warning(f"Training failed for {stock_code}")
+        else:
+            logger.info("No models need retraining at this time.")
 
-    # Clean up progress file after successful completion
-    if os.path.exists(PROGRESS_FILE):
-        os.remove(PROGRESS_FILE)
+        # Clean up progress file after successful completion
+        if os.path.exists(PROGRESS_FILE):
+            os.remove(PROGRESS_FILE)
+            logger.info("Training process completed successfully. Progress file removed.")
+    except Exception as e:
+        logger.error(f"An error occurred in the main function: {str(e)}")
+        logger.error(traceback.format_exc())
+
 
 if __name__ == "__main__":
     asyncio.run(main())
