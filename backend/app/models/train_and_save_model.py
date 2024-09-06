@@ -5,6 +5,7 @@ from arima_model import ARIMAStockPredictor
 import sys
 import os
 import json
+import csv
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from app.services.data_collection import fetch_historical_data
 import asyncio
@@ -14,25 +15,32 @@ import joblib
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime, timedelta
 import traceback
+import time
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 PROGRESS_FILE = os.path.join(os.path.dirname(__file__), 'training_progress.json')
+FAILED_STOCKS_FILE = os.path.join(os.path.dirname(__file__), 'failed_stocks.csv')
 
+MAX_CONSECUTIVE_ERRORS = 10
+PAUSE_DURATION = 60  # 1 minute
 
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 async def get_data_for_stock(stock_code, time_frame='5years'):
     try:
         data = await fetch_historical_data(stock_code, time_frame)
         if data is not None and not data.empty:
-            await asyncio.sleep(0.34)  # Sleep for 0.34 seconds to respect the rate limit
             return data
         else:
             logger.warning(f"No data fetched for {stock_code}")
+            save_failed_stock(stock_code, "No data fetched")
     except Exception as e:
         logger.error(f"Error fetching data for {stock_code}: {str(e)}")
-    await asyncio.sleep(0.34)  # Sleep even if there's an error to maintain the rate limit
+        save_failed_stock(stock_code, f"Error fetching data: {str(e)}")
+        raise  # Re-raise the exception to trigger a retry
     return None
 
 
@@ -90,7 +98,13 @@ def load_progress():
 
 def save_progress(completed, last_index, errors):
     with open(PROGRESS_FILE, 'w') as f:
-        json.dump({'completed': completed, 'last_index': last_index, 'errors': errors}, f)
+        json.dump({'completed': list(completed), 'last_index': last_index, 'errors': errors}, f)
+
+
+def save_failed_stock(stock_code, reason):
+    with open(FAILED_STOCKS_FILE, 'a', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow([stock_code, reason, datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
 
 
 async def train_models(stock_codes):
@@ -113,10 +127,11 @@ async def train_models(stock_codes):
             else:
                 logger.error(f"Skipping model training for {stock_code} due to missing data.")
                 errors.append(f"Missing data for {stock_code}")
+                save_failed_stock(stock_code, "Missing data")
             
             # Save progress after each stock is processed (whether successful or not)
             completed.add(stock_code)
-            save_progress(list(completed), i + 1, errors)
+            save_progress(completed, i + 1, errors)
             logger.info(f"Progress: {len(completed)}/{total_stocks} stocks processed")
         
         for future in as_completed(futures):
@@ -124,13 +139,16 @@ async def train_models(stock_codes):
                 result = future.result()
                 results.append(result)
                 logger.info(f"Completed training for {result[0]}")
+                # Update progress after each model is trained
+                completed.add(result[0])
+                save_progress(completed, start_index + len(completed), errors)
             except Exception as e:
                 logger.error(f"Error processing future: {str(e)}")
                 logger.error(traceback.format_exc())
-                errors.append(f"Error processing {result[0]}: {str(e)}")
+                errors.append(f"Error processing {result[0] if result else 'unknown stock'}: {str(e)}")
             
             # Update progress after each future is completed
-            save_progress(list(completed), start_index + len(completed), errors)
+            save_progress(completed, start_index + len(completed), errors)
     
     return results
 
@@ -160,9 +178,13 @@ async def main():
         # Uncomment the following line if you want to delete existing models before training
         # delete_existing_models(model_dir)
 
+        progress = load_progress()
+        start_index = progress['last_index']
+        completed = set(progress['completed'])
+
         stocks_to_train = [
-            stock_code for stock_code in stock_codes
-            if should_retrain(os.path.join(model_dir, f'{stock_code}_lstm_model.h5'))
+            stock_code for stock_code in stock_codes[start_index:]
+            if stock_code not in completed and should_retrain(os.path.join(model_dir, f'{stock_code}_lstm_model.h5'))
         ]
 
         if stocks_to_train:
