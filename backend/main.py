@@ -229,7 +229,7 @@ async def predict_stock(stock_code: str, data: List[float]):
         # Generate past predictions using a rolling window
         past_predictions = []
         for i in range(60, len(scaled_data)):
-            X = np.array([scaled_data[i-60:i]])
+            X = scaled_data[i-60:i].reshape(1, 60, 1)
             prediction = predictor.predict(X)
             past_predictions.append(prediction[0][0])
         
@@ -240,15 +240,15 @@ async def predict_stock(stock_code: str, data: List[float]):
         confidence_intervals = []
         num_simulations = 100
         forecast_horizon = 7
-        last_sequence = scaled_data[-60:]
+        last_sequence = scaled_data[-60:].reshape(1, 60, 1)
 
         for _ in range(forecast_horizon):
             simulations = []
             for _ in range(num_simulations):
-                X = np.array([last_sequence])
-                prediction = predictor.predict(X)
+                prediction = predictor.predict(last_sequence)
                 simulations.append(prediction[0][0])
-                last_sequence = np.append(last_sequence[1:], prediction[0][0])
+                last_sequence = np.roll(last_sequence, -1, axis=1)
+                last_sequence[0, -1, 0] = prediction[0][0]
             
             mean_prediction = np.mean(simulations)
             ci_lower = np.percentile(simulations, 5)
