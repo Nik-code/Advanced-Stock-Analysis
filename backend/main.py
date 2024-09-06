@@ -15,6 +15,7 @@ from app.models.lstm_model import LSTMStockPredictor
 import joblib
 from app.services.llm_integration import GPT4Processor
 import xml.etree.ElementTree as ET
+from app.models.backtesting import backtest_lstm_model
 
 load_dotenv()
 
@@ -281,6 +282,26 @@ async def ingest_data(scrip_code: str, time_frame: str = '1year'):
     except Exception as e:
         logger.error(f"Error ingesting data for {scrip_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error ingesting data for {scrip_code}")
+
+
+@app.post("/api/backtest/{stock_code}")
+async def backtest_stock(stock_code: str, days: str = '1year'):
+    try:
+        logger.info(f"Received backtesting request for {stock_code}")
+        historical_data = await fetch_historical_data(stock_code, days)
+        
+        if historical_data is None:
+            raise HTTPException(status_code=404, detail=f"No data found for stock symbol {stock_code}")
+
+        backtesting_results = backtest_lstm_model(stock_code, historical_data)
+        
+        logger.info(f"Successfully completed backtesting for {stock_code}")
+        
+        return backtesting_results
+    except Exception as e:
+        logger.error(f"Error during backtesting for {stock_code}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error during backtesting for {stock_code}: {str(e)}")
+    
 
 
 # New endpoint to update data in InfluxDB
