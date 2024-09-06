@@ -16,6 +16,7 @@ import joblib
 from app.services.llm_integration import GPT4Processor
 import xml.etree.ElementTree as ET
 from app.models.backtesting import backtest_lstm_model
+from app.models.arima_model import ARIMAStockPredictor
 
 load_dotenv()
 
@@ -213,60 +214,77 @@ async def predict_stock(stock_code: str, data: List[float]):
     try:
         logger.info(f"Received prediction request for {stock_code}")
         model_dir = os.path.join(os.path.dirname(__file__), 'models')
-        model_path = os.path.join(model_dir, f'{stock_code}_lstm_model.h5')
+        lstm_model_path = os.path.join(model_dir, f'{stock_code}_lstm_model.h5')
+        arima_model_path = os.path.join(model_dir, f'{stock_code}_arima_model.pkl')
         scaler_path = os.path.join(model_dir, f'{stock_code}_scaler.pkl')
         
-        if not os.path.exists(model_path) or not os.path.exists(scaler_path):
-            logger.error(f"Model or scaler not found for {stock_code}")
-            raise HTTPException(status_code=404, detail=f"Model not found for {stock_code}")
+        if not os.path.exists(lstm_model_path) or not os.path.exists(arima_model_path) or not os.path.exists(scaler_path):
+            logger.error(f"Models or scaler not found for {stock_code}")
+            raise HTTPException(status_code=404, detail=f"Models not found for {stock_code}")
         
-        predictor = LSTMStockPredictor(input_shape=(60, 1))
-        predictor.load_model(model_path)
+        lstm_predictor = LSTMStockPredictor(input_shape=(60, 1))
+        lstm_predictor.load_model(lstm_model_path)
+        arima_predictor = joblib.load(arima_model_path)
         scaler = joblib.load(scaler_path)
         
         data = np.array(data).reshape(-1, 1)
         scaled_data = scaler.transform(data)
         
         # Generate past predictions using a rolling window
-        past_predictions = []
+        past_predictions_lstm = []
+        past_predictions_arima = []
         for i in range(60, len(scaled_data)):
             X = scaled_data[i-60:i].reshape(1, 60, 1)
-            prediction = predictor.predict(X)
-            past_predictions.append(prediction[0][0])
+            lstm_prediction = lstm_predictor.predict(X)
+            arima_prediction = arima_predictor.predict(1)
+            past_predictions_lstm.append(lstm_prediction[0][0])
+            past_predictions_arima.append(arima_prediction[0])
         
-        past_predictions = scaler.inverse_transform(np.array(past_predictions).reshape(-1, 1))
+        past_predictions_lstm = scaler.inverse_transform(np.array(past_predictions_lstm).reshape(-1, 1))
+        past_predictions_arima = scaler.inverse_transform(np.array(past_predictions_arima).reshape(-1, 1))
         
         # Generate future predictions with confidence intervals
-        future_predictions = []
+        future_predictions_lstm = []
+        future_predictions_arima = []
         confidence_intervals = []
         num_simulations = 100
         forecast_horizon = 7
         last_sequence = scaled_data[-60:].reshape(1, 60, 1)
 
         for _ in range(forecast_horizon):
-            simulations = []
+            simulations_lstm = []
             for _ in range(num_simulations):
-                prediction = predictor.predict(last_sequence)
-                simulations.append(prediction[0][0])
+                lstm_prediction = lstm_predictor.predict(last_sequence)
+                simulations_lstm.append(lstm_prediction[0][0])
                 last_sequence = np.roll(last_sequence, -1, axis=1)
-                last_sequence[0, -1, 0] = prediction[0][0]
+                last_sequence[0, -1, 0] = lstm_prediction[0][0]
             
-            mean_prediction = np.mean(simulations)
-            ci_lower = np.percentile(simulations, 5)
-            ci_upper = np.percentile(simulations, 95)
+            arima_prediction = arima_predictor.predict(1)
             
-            future_predictions.append(mean_prediction)
+            mean_prediction_lstm = np.mean(simulations_lstm)
+            ci_lower = np.percentile(simulations_lstm, 5)
+            ci_upper = np.percentile(simulations_lstm, 95)
+            
+            future_predictions_lstm.append(mean_prediction_lstm)
+            future_predictions_arima.append(arima_prediction[0])
             confidence_intervals.append((ci_lower, ci_upper))
 
-        future_predictions = scaler.inverse_transform(np.array(future_predictions).reshape(-1, 1))
+        future_predictions_lstm = scaler.inverse_transform(np.array(future_predictions_lstm).reshape(-1, 1))
+        future_predictions_arima = scaler.inverse_transform(np.array(future_predictions_arima).reshape(-1, 1))
         confidence_intervals = scaler.inverse_transform(np.array(confidence_intervals))
+        
+        # Combine LSTM and ARIMA predictions (simple average)
+        ensemble_predictions = (future_predictions_lstm + future_predictions_arima) / 2
         
         logger.info(f"Successfully generated predictions for {stock_code}")
         
         return {
-            "predictions": future_predictions.flatten().tolist(),
+            "lstm_predictions": future_predictions_lstm.flatten().tolist(),
+            "arima_predictions": future_predictions_arima.flatten().tolist(),
+            "ensemble_predictions": ensemble_predictions.flatten().tolist(),
             "confidence_intervals": confidence_intervals.tolist(),
-            "past_predictions": past_predictions.flatten().tolist()
+            "past_predictions_lstm": past_predictions_lstm.flatten().tolist(),
+            "past_predictions_arima": past_predictions_arima.flatten().tolist()
         }
     except Exception as e:
         logger.error(f"Error making prediction for {stock_code}: {str(e)}")
