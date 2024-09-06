@@ -282,16 +282,16 @@ async def get_sentiment(symbol: str):
         logger.info(f"Fetching news data for {symbol}")
         news_data = await fetch_news_data(symbol)
         logger.info(f"Fetched {len(news_data)} news articles for {symbol}")
-        
+
         # Get LSTM prediction
         historical_data = await fetch_historical_data(symbol, '1year')
         if historical_data is None:
             raise HTTPException(status_code=404, detail=f"No data found for stock symbol {symbol}")
         close_prices = historical_data['close'].tolist()
         lstm_prediction = await predict_stock(symbol, close_prices)
-        
+
         logger.info(f"Processing news data for {symbol}")
-        news_analysis = await process_news_data(news_data, lstm_prediction['predictions'][0])
+        news_analysis = await process_news_data(news_data, lstm_prediction['predictions'][0], symbol, historical_data)
         logger.info(f"Sentiment analysis result for {symbol}: {news_analysis}")
         return {
             "sentiment": news_analysis['sentiment'],

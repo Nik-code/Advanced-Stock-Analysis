@@ -18,7 +18,7 @@ class GPT4Processor:
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=messages,
-                max_tokens=500,
+                max_tokens=700,
                 n=1,
                 stop=None,
                 temperature=0.7
@@ -48,14 +48,15 @@ class GPT4Processor:
         
         return sentiment_score, explanation
 
-    def final_analysis(self, news_sentiment, sentiment_explanation, lstm_prediction, technical_indicators):
+    def final_analysis(self, news_sentiment, sentiment_explanation, lstm_prediction, technical_indicators, historical_data):
         logger.info("Generating final analysis")
         messages = [
-            {"role": "system", "content": "You are a financial analyst. Based on the given information, provide a detailed analysis of the stock's performance and future outlook. Include key factors influencing your decision and recommend whether a shareholder should buy, hold, or sell. Structure your response with clear sections and bullet points for easy readability."},
+            {"role": "system", "content": "You are a financial analyst for the Indian Stock Market. Based on the given information, provide a detailed analysis of the stock's performance and future outlook. Include key factors influencing your decision and recommend whether a shareholder should buy, hold, or sell. Structure your response with clear sections and bullet points for easy readability."},
             {"role": "user", "content": f"""
             News Sentiment Score: {news_sentiment}
             News Sentiment Analysis: {sentiment_explanation}
             LSTM Model Prediction: {lstm_prediction}
+            Historical Data: {historical_data}
             Technical Indicators:
             - SMA 20: {technical_indicators['sma_20']}
             - EMA 50: {technical_indicators['ema_50']}
