@@ -26,7 +26,7 @@ RATE_LIMIT_DELAY = 1  # 1 second delay between batches
 
 
 async def backtest_model(model_type, stock_code, historical_data):
-    if len(historical_data) < 61:
+    if len(historical_data) < 30:
         logger.warning(f"Insufficient data for {stock_code} to perform backtesting. Skipping.")
         return None
 
@@ -47,8 +47,8 @@ async def process_batch(batch, time_frame):
     for stock_code in batch:
         logger.info(f"Backtesting {stock_code}")
         historical_data = await fetch_historical_data(stock_code, time_frame)
-        if historical_data is None or len(historical_data) < 61:
-            logger.warning(f"Insufficient data available for {stock_code}. Got {len(historical_data) if historical_data is not None else 0} data points, need at least 61.")
+        if historical_data is None or len(historical_data) < 30:  # Reduced minimum data points
+            logger.warning(f"Insufficient data available for {stock_code}. Got {len(historical_data) if historical_data is not None else 0} data points, need at least 30.")
             insufficient_data.append(stock_code)
             continue
 
