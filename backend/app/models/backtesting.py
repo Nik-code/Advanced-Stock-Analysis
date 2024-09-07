@@ -11,6 +11,7 @@ import os
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+
 class ARIMAStockPredictor:
     def __init__(self, order=(1, 1, 1)):
         self.order = order
@@ -29,6 +30,7 @@ class ARIMAStockPredictor:
         rmse = np.sqrt(mean_squared_error(y_test, predictions))
         return mae, rmse
 
+
 class LSTMStockPredictor:
     def __init__(self, input_shape=(60, 1)):
         self.model = None
@@ -46,9 +48,18 @@ class LSTMStockPredictor:
         rmse = np.sqrt(mean_squared_error(y_test, predictions))
         return mae, rmse
 
-def backtest_model(stock_code, historical_data, model_type, investment_amount=10000, threshold=0.01, transaction_cost=0.001):
+
+def backtest_model(stock_code, historical_data, model_type, investment_amount=10000, threshold=0.01, transaction_cost=0.001, stop_loss_percentage=0.05):
     try:
         close_prices = historical_data['close'].values
+        cash = investment_amount
+        shares = 0
+        trades = []
+        portfolio_values = [investment_amount]
+        buy_price = 0
+        mae = 0
+        rmse = 0
+        final_portfolio_value = investment_amount
 
         if model_type == 'LSTM':
             model_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'models')
@@ -70,59 +81,78 @@ def backtest_model(stock_code, historical_data, model_type, investment_amount=10
             X, y = np.array(X), np.array(y)
 
             predictions = predictor.predict(X)
-            predictions = scaler.inverse_transform(predictions)
-            actual_prices = scaler.inverse_transform(y.reshape(-1, 1))
+            predictions = scaler.inverse_transform(predictions.reshape(-1, 1)).flatten()
+            actual_prices = scaler.inverse_transform(y.reshape(-1, 1)).flatten()
+
+            logger.info(f"LSTM Predictions for {stock_code}:")
+            for i in range(len(predictions)):
+                current_price = actual_prices[i]
+                current_prediction = predictions[i]
+
+                if i > 0:
+                    prev_price = actual_prices[i-1]
+
+                    if shares > 0 and current_price < buy_price * (1 - stop_loss_percentage):
+                        cash += shares * current_price * (1 - transaction_cost)
+                        trades.append(('sell', shares, current_price, 'stop-loss'))
+                        shares = 0
+                    elif current_prediction > prev_price * (1 + threshold) and cash > current_price:
+                        shares_to_buy = (cash * (1 - transaction_cost)) // current_price
+                        if shares_to_buy > 0:
+                            shares += shares_to_buy
+                            cash -= shares_to_buy * current_price * (1 + transaction_cost)
+                            trades.append(('buy', shares_to_buy, current_price))
+                            buy_price = current_price
+                    elif current_prediction < prev_price * (1 - threshold) and shares > 0:
+                        cash += shares * current_price * (1 - transaction_cost)
+                        trades.append(('sell', shares, current_price))
+                        shares = 0
+
+                portfolio_value = cash + shares * current_price
+                portfolio_values.append(portfolio_value)
+
+            final_portfolio_value = cash + shares * actual_prices[-1]
 
         elif model_type == 'ARIMA':
-            train_size = int(len(close_prices) * 0.8)
-            train, test = close_prices[:train_size], close_prices[train_size:]
+            # ARIMA model implementation
+            model = ARIMA(close_prices, order=(1, 1, 1))
+            model_fit = model.fit()
+            predictions = model_fit.forecast(steps=len(close_prices))
+            actual_prices = close_prices
 
-            predictor = ARIMAStockPredictor()
-            predictor.train(train)
+            mae = np.mean(np.abs(predictions - actual_prices))
+            rmse = np.sqrt(np.mean((predictions - actual_prices)**2))
 
-            predictions = predictor.predict(len(test))
-            if len(predictions) != len(test):
-                raise ValueError(f"ARIMA predictions length ({len(predictions)}) does not match test data length ({len(test)})")
-            actual_prices = test.reshape(-1, 1)
-            predictions = predictions.reshape(-1, 1)
+            for i in range(1, len(predictions)):
+                current_price = actual_prices[i]
+                prev_price = actual_prices[i-1]
+                prev_prediction = predictions[i-1]
 
-            mae, rmse = predictor.evaluate(actual_prices, predictions)
-
-        else:
-            raise ValueError(f"Invalid model type: {model_type}")
-
-        cash = investment_amount
-        shares = 0
-        trades = []
-        portfolio_values = [investment_amount]
-
-        for i in range(1, len(actual_prices)):
-            current_price = actual_prices[i][0]
-            predicted_price = predictions[i][0]
-
-            if i > 0:  # Add a one-day delay to simulate real-world latency
-                prev_prediction = predictions[i-1][0]
-                prev_price = actual_prices[i-1][0]
-
-                if prev_prediction > prev_price * (1 + threshold) and cash > current_price:
+                if shares > 0 and current_price < buy_price * (1 - stop_loss_percentage):
+                    cash += shares * current_price * (1 - transaction_cost)
+                    trades.append(('sell', shares, current_price, 'stop-loss'))
+                    shares = 0
+                elif prev_prediction > prev_price * (1 + threshold) and cash > current_price:
                     shares_to_buy = (cash * (1 - transaction_cost)) // current_price
                     if shares_to_buy > 0:
                         shares += shares_to_buy
                         cash -= shares_to_buy * current_price * (1 + transaction_cost)
                         trades.append(('buy', shares_to_buy, current_price))
+                        buy_price = current_price
                 elif prev_prediction < prev_price * (1 - threshold) and shares > 0:
                     cash += shares * current_price * (1 - transaction_cost)
                     trades.append(('sell', shares, current_price))
                     shares = 0
 
-            portfolio_value = cash + shares * current_price
-            portfolio_values.append(portfolio_value)
+                portfolio_value = cash + shares * current_price
+                portfolio_values.append(portfolio_value)
 
-        final_portfolio_value = cash + shares * actual_prices[-1][0]
+            final_portfolio_value = cash + shares * actual_prices[-1]
+
+        else:
+            raise ValueError(f"Invalid model type: {model_type}")
+
         total_return = (final_portfolio_value - investment_amount) / investment_amount * 100
-        
-        mae, rmse = predictor.evaluate(X if model_type == 'LSTM' else actual_prices.flatten(), 
-                                       y if model_type == 'LSTM' else predictions)
 
         return {
             'stock_code': stock_code,
@@ -135,16 +165,18 @@ def backtest_model(stock_code, historical_data, model_type, investment_amount=10
             'portfolio_values': portfolio_values,
             'mae': mae,
             'rmse': rmse,
-            'predictions': predictions.flatten().tolist(),
-            'actual_values': actual_prices.flatten().tolist()
+            'predictions': predictions.tolist(),
+            'actual_values': actual_prices.tolist()
         }
 
     except Exception as e:
         logger.error(f"Error in backtesting {model_type} model for {stock_code}: {str(e)}")
         raise
 
+
 def backtest_lstm_model(stock_code, historical_data, investment_amount=10000, threshold=0.01, transaction_cost=0.001):
     return backtest_model(stock_code, historical_data, 'LSTM', investment_amount, threshold, transaction_cost)
+
 
 def backtest_arima_model(stock_code, historical_data, investment_amount=10000, threshold=0.01, transaction_cost=0.001):
     return backtest_model(stock_code, historical_data, 'ARIMA', investment_amount, threshold, transaction_cost)
