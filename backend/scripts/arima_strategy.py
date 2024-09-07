@@ -42,7 +42,7 @@ class ARIMAStrategy:
             return None
 
         close_prices = historical_data['close'].values
-        dates = historical_data.index
+        dates = pd.to_datetime(historical_data.index)  # Ensure dates are datetime
 
         try:
             model = ARIMA(close_prices, order=self.arima_order)
@@ -87,7 +87,13 @@ def evaluate_strategy(strategy, returns, strategy_name):
 def generate_detailed_report(strategy, returns, strategy_name):
     cumulative_returns = (1 + returns).cumprod() - 1
     total_return = cumulative_returns.iloc[-1]
-    days = (returns.index[-1] - returns.index[0]).days
+
+    # Check if the index is DatetimeIndex, if not, assume it's a range index
+    if isinstance(returns.index, pd.DatetimeIndex):
+        days = (returns.index[-1] - returns.index[0]).days
+    else:
+        days = len(returns)  # Assume each data point represents a day
+
     annualized_return = (1 + total_return) ** (365 / max(days, 1)) - 1 if days > 0 else 0
     risk_free_rate = 0.02
     sharpe_ratio = qs.stats.sharpe(returns, rf=risk_free_rate, periods=252)
@@ -120,7 +126,7 @@ Trade Details:
         else:  # sell
             trade_value = amount * price
         total_profit += trade_value
-        report += f"{date.strftime('%Y-%m-%d %H:%M:%S')} - {action.upper()}: {amount} shares at ${price:.2f} (Trade Value: ${trade_value:.2f})\n"
+        report += f"{date} - {action.upper()}: {amount} shares at ${price:.2f} (Trade Value: ${trade_value:.2f})\n"
 
     report += f"\nTotal Profit: ${total_profit:.2f}"
     report += f"\nFinal Portfolio Value: ${strategy.portfolio_values[-1]:.2f}"

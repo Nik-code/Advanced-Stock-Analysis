@@ -1,0 +1,1402 @@
+Insufficient historical data for GAEL with time frame 1month
+
+
+ARIMA Strategy (GAEL, order=(1, 1, 1), buy=0.01, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: -1.14%
+Annualized Return: 0.00%
+Sharpe Ratio: -0.11
+Sortino Ratio: -0.17
+Max Drawdown: -11.25%
+Win Rate: 45.83%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000007 - BUY: 695.0 shares at $143.60 (Trade Value: $-99802.00)
+1970-01-01 00:00:00.000000054 - SELL: 695.0 shares at $142.25 (Trade Value: $98863.75)
+
+Total Profit: $-938.25
+Final Portfolio Value: $98863.08
+Overall Profit %: -1.14%
+
+==================================================
+
+
+ARIMA Strategy (GAEL, order=(1, 1, 1), buy=0.01, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 20.72%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.04
+Sortino Ratio: 2.13
+Max Drawdown: -11.26%
+Win Rate: 49.15%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000002 - BUY: 717.0 shares at $139.30 (Trade Value: $-99878.10)
+1970-01-01 00:00:00.000000005 - SELL: 717.0 shares at $142.50 (Trade Value: $102172.50)
+1970-01-01 00:00:00.000000007 - BUY: 687.0 shares at $148.45 (Trade Value: $-101985.15)
+1970-01-01 00:00:00.000000008 - SELL: 687.0 shares at $157.35 (Trade Value: $108099.45)
+1970-01-01 00:00:00.000000180 - BUY: 797.0 shares at $135.35 (Trade Value: $-107873.95)
+1970-01-01 00:00:00.000000184 - SELL: 797.0 shares at $153.35 (Trade Value: $122219.95)
+1970-01-01 00:00:00.000000191 - BUY: 849.0 shares at $143.60 (Trade Value: $-121916.40)
+1970-01-01 00:00:00.000000238 - SELL: 849.0 shares at $142.25 (Trade Value: $120770.25)
+
+Total Profit: $21608.55
+Final Portfolio Value: $120723.63
+Overall Profit %: 20.72%
+
+==================================================
+
+Insufficient historical data for GAEL with time frame 1month
+
+
+ARIMA Strategy (GAEL, order=(1, 1, 1), buy=0.02, sell=0.02, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 6.87%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.07
+Sortino Ratio: 1.81
+Max Drawdown: -9.98%
+Win Rate: 52.08%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000011 - BUY: 733.0 shares at $136.20 (Trade Value: $-99834.60)
+1970-01-01 00:00:00.000000058 - SELL: 733.0 shares at $145.85 (Trade Value: $106908.05)
+
+Total Profit: $7073.45
+Final Portfolio Value: $106866.71
+Overall Profit %: 6.87%
+
+==================================================
+
+
+ARIMA Strategy (GAEL, order=(1, 1, 1), buy=0.02, sell=0.02, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 31.31%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.42
+Sortino Ratio: 3.15
+Max Drawdown: -9.98%
+Win Rate: 52.73%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000002 - BUY: 717.0 shares at $139.30 (Trade Value: $-99878.10)
+1970-01-01 00:00:00.000000008 - SELL: 717.0 shares at $157.35 (Trade Value: $112819.95)
+1970-01-01 00:00:00.000000181 - BUY: 822.0 shares at $136.95 (Trade Value: $-112572.90)
+1970-01-01 00:00:00.000000184 - SELL: 822.0 shares at $153.35 (Trade Value: $126053.70)
+1970-01-01 00:00:00.000000195 - BUY: 923.0 shares at $136.20 (Trade Value: $-125712.60)
+1970-01-01 00:00:00.000000222 - BUY: 1.0 shares at $130.55 (Trade Value: $-130.55)
+1970-01-01 00:00:00.000000238 - SELL: 924.0 shares at $142.25 (Trade Value: $131439.00)
+
+Total Profit: $32018.50
+Final Portfolio Value: $131309.89
+Overall Profit %: 31.31%
+
+==================================================
+
+Insufficient historical data for GAEL with time frame 1month
+
+
+ARIMA Strategy (GAEL, order=(1, 1, 1), buy=0.015, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: -1.14%
+Annualized Return: 0.00%
+Sharpe Ratio: -0.11
+Sortino Ratio: -0.17
+Max Drawdown: -11.25%
+Win Rate: 45.83%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000007 - BUY: 695.0 shares at $143.60 (Trade Value: $-99802.00)
+1970-01-01 00:00:00.000000054 - SELL: 695.0 shares at $142.25 (Trade Value: $98863.75)
+
+Total Profit: $-938.25
+Final Portfolio Value: $98863.08
+Overall Profit %: -1.14%
+
+==================================================
+
+
+ARIMA Strategy (GAEL, order=(1, 1, 1), buy=0.015, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 24.31%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.21
+Sortino Ratio: 2.53
+Max Drawdown: -9.98%
+Win Rate: 51.79%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000002 - BUY: 717.0 shares at $139.30 (Trade Value: $-99878.10)
+1970-01-01 00:00:00.000000005 - SELL: 717.0 shares at $142.50 (Trade Value: $102172.50)
+1970-01-01 00:00:00.000000007 - BUY: 687.0 shares at $148.45 (Trade Value: $-101985.15)
+1970-01-01 00:00:00.000000008 - SELL: 687.0 shares at $157.35 (Trade Value: $108099.45)
+1970-01-01 00:00:00.000000180 - BUY: 797.0 shares at $135.35 (Trade Value: $-107873.95)
+1970-01-01 00:00:00.000000184 - SELL: 797.0 shares at $153.35 (Trade Value: $122219.95)
+1970-01-01 00:00:00.000000194 - BUY: 874.0 shares at $139.45 (Trade Value: $-121879.30)
+1970-01-01 00:00:00.000000238 - SELL: 874.0 shares at $142.25 (Trade Value: $124326.50)
+
+Total Profit: $25201.90
+Final Portfolio Value: $124313.47
+Overall Profit %: 24.31%
+
+==================================================
+
+Insufficient historical data for GAEL with time frame 1month
+
+
+ARIMA Strategy (GAEL, order=(2, 1, 2), buy=0.01, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: -1.14%
+Annualized Return: 0.00%
+Sharpe Ratio: -0.11
+Sortino Ratio: -0.17
+Max Drawdown: -11.25%
+Win Rate: 45.83%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000007 - BUY: 695.0 shares at $143.60 (Trade Value: $-99802.00)
+1970-01-01 00:00:00.000000054 - SELL: 695.0 shares at $142.25 (Trade Value: $98863.75)
+
+Total Profit: $-938.25
+Final Portfolio Value: $98863.08
+Overall Profit %: -1.14%
+
+==================================================
+
+
+ARIMA Strategy (GAEL, order=(2, 1, 2), buy=0.01, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 20.72%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.04
+Sortino Ratio: 2.13
+Max Drawdown: -11.26%
+Win Rate: 49.15%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000002 - BUY: 717.0 shares at $139.30 (Trade Value: $-99878.10)
+1970-01-01 00:00:00.000000005 - SELL: 717.0 shares at $142.50 (Trade Value: $102172.50)
+1970-01-01 00:00:00.000000007 - BUY: 687.0 shares at $148.45 (Trade Value: $-101985.15)
+1970-01-01 00:00:00.000000008 - SELL: 687.0 shares at $157.35 (Trade Value: $108099.45)
+1970-01-01 00:00:00.000000180 - BUY: 797.0 shares at $135.35 (Trade Value: $-107873.95)
+1970-01-01 00:00:00.000000184 - SELL: 797.0 shares at $153.35 (Trade Value: $122219.95)
+1970-01-01 00:00:00.000000191 - BUY: 849.0 shares at $143.60 (Trade Value: $-121916.40)
+1970-01-01 00:00:00.000000238 - SELL: 849.0 shares at $142.25 (Trade Value: $120770.25)
+
+Total Profit: $21608.55
+Final Portfolio Value: $120723.63
+Overall Profit %: 20.72%
+
+==================================================
+
+Insufficient historical data for GAEL with time frame 1month
+
+
+ARIMA Strategy (GAEL, order=(2, 1, 2), buy=0.02, sell=0.02, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 6.87%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.07
+Sortino Ratio: 1.81
+Max Drawdown: -9.98%
+Win Rate: 52.08%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000011 - BUY: 733.0 shares at $136.20 (Trade Value: $-99834.60)
+1970-01-01 00:00:00.000000058 - SELL: 733.0 shares at $145.85 (Trade Value: $106908.05)
+
+Total Profit: $7073.45
+Final Portfolio Value: $106866.71
+Overall Profit %: 6.87%
+
+==================================================
+
+
+ARIMA Strategy (GAEL, order=(2, 1, 2), buy=0.02, sell=0.02, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 25.78%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.29
+Sortino Ratio: 2.77
+Max Drawdown: -9.98%
+Win Rate: 51.85%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000002 - BUY: 717.0 shares at $139.30 (Trade Value: $-99878.10)
+1970-01-01 00:00:00.000000005 - SELL: 717.0 shares at $142.50 (Trade Value: $102172.50)
+1970-01-01 00:00:00.000000007 - BUY: 687.0 shares at $148.45 (Trade Value: $-101985.15)
+1970-01-01 00:00:00.000000008 - SELL: 687.0 shares at $157.35 (Trade Value: $108099.45)
+1970-01-01 00:00:00.000000181 - BUY: 787.0 shares at $136.95 (Trade Value: $-107779.65)
+1970-01-01 00:00:00.000000184 - SELL: 787.0 shares at $153.35 (Trade Value: $120686.45)
+1970-01-01 00:00:00.000000195 - BUY: 885.0 shares at $136.20 (Trade Value: $-120537.00)
+1970-01-01 00:00:00.000000238 - SELL: 885.0 shares at $142.25 (Trade Value: $125891.25)
+
+Total Profit: $26669.75
+Final Portfolio Value: $125782.72
+Overall Profit %: 25.78%
+
+==================================================
+
+Insufficient historical data for GAEL with time frame 1month
+
+
+ARIMA Strategy (GAEL, order=(2, 1, 2), buy=0.015, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: -1.14%
+Annualized Return: 0.00%
+Sharpe Ratio: -0.11
+Sortino Ratio: -0.17
+Max Drawdown: -11.25%
+Win Rate: 45.83%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000007 - BUY: 695.0 shares at $143.60 (Trade Value: $-99802.00)
+1970-01-01 00:00:00.000000054 - SELL: 695.0 shares at $142.25 (Trade Value: $98863.75)
+
+Total Profit: $-938.25
+Final Portfolio Value: $98863.08
+Overall Profit %: -1.14%
+
+==================================================
+
+
+ARIMA Strategy (GAEL, order=(2, 1, 2), buy=0.015, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 27.28%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.35
+Sortino Ratio: 2.91
+Max Drawdown: -9.98%
+Win Rate: 52.73%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000002 - BUY: 717.0 shares at $139.30 (Trade Value: $-99878.10)
+1970-01-01 00:00:00.000000005 - SELL: 717.0 shares at $142.50 (Trade Value: $102172.50)
+1970-01-01 00:00:00.000000007 - BUY: 687.0 shares at $148.45 (Trade Value: $-101985.15)
+1970-01-01 00:00:00.000000008 - SELL: 687.0 shares at $157.35 (Trade Value: $108099.45)
+1970-01-01 00:00:00.000000180 - BUY: 797.0 shares at $135.35 (Trade Value: $-107873.95)
+1970-01-01 00:00:00.000000184 - SELL: 797.0 shares at $153.35 (Trade Value: $122219.95)
+1970-01-01 00:00:00.000000195 - BUY: 895.0 shares at $136.20 (Trade Value: $-121899.00)
+1970-01-01 00:00:00.000000238 - SELL: 895.0 shares at $142.25 (Trade Value: $127313.75)
+
+Total Profit: $28169.45
+Final Portfolio Value: $127278.01
+Overall Profit %: 27.28%
+
+==================================================
+
+Insufficient historical data for GAEL with time frame 1month
+
+
+ARIMA Strategy (GAEL, order=(1, 1, 2), buy=0.01, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: -1.14%
+Annualized Return: 0.00%
+Sharpe Ratio: -0.11
+Sortino Ratio: -0.17
+Max Drawdown: -11.25%
+Win Rate: 45.83%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000007 - BUY: 695.0 shares at $143.60 (Trade Value: $-99802.00)
+1970-01-01 00:00:00.000000054 - SELL: 695.0 shares at $142.25 (Trade Value: $98863.75)
+
+Total Profit: $-938.25
+Final Portfolio Value: $98863.08
+Overall Profit %: -1.14%
+
+==================================================
+
+
+ARIMA Strategy (GAEL, order=(1, 1, 2), buy=0.01, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 20.72%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.04
+Sortino Ratio: 2.13
+Max Drawdown: -11.26%
+Win Rate: 49.15%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000002 - BUY: 717.0 shares at $139.30 (Trade Value: $-99878.10)
+1970-01-01 00:00:00.000000005 - SELL: 717.0 shares at $142.50 (Trade Value: $102172.50)
+1970-01-01 00:00:00.000000007 - BUY: 687.0 shares at $148.45 (Trade Value: $-101985.15)
+1970-01-01 00:00:00.000000008 - SELL: 687.0 shares at $157.35 (Trade Value: $108099.45)
+1970-01-01 00:00:00.000000180 - BUY: 797.0 shares at $135.35 (Trade Value: $-107873.95)
+1970-01-01 00:00:00.000000184 - SELL: 797.0 shares at $153.35 (Trade Value: $122219.95)
+1970-01-01 00:00:00.000000191 - BUY: 849.0 shares at $143.60 (Trade Value: $-121916.40)
+1970-01-01 00:00:00.000000238 - SELL: 849.0 shares at $142.25 (Trade Value: $120770.25)
+
+Total Profit: $21608.55
+Final Portfolio Value: $120723.63
+Overall Profit %: 20.72%
+
+==================================================
+
+Insufficient historical data for GAEL with time frame 1month
+
+
+ARIMA Strategy (GAEL, order=(1, 1, 2), buy=0.02, sell=0.02, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 6.87%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.07
+Sortino Ratio: 1.81
+Max Drawdown: -9.98%
+Win Rate: 52.08%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000011 - BUY: 733.0 shares at $136.20 (Trade Value: $-99834.60)
+1970-01-01 00:00:00.000000058 - SELL: 733.0 shares at $145.85 (Trade Value: $106908.05)
+
+Total Profit: $7073.45
+Final Portfolio Value: $106866.71
+Overall Profit %: 6.87%
+
+==================================================
+
+
+ARIMA Strategy (GAEL, order=(1, 1, 2), buy=0.02, sell=0.02, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 31.31%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.42
+Sortino Ratio: 3.15
+Max Drawdown: -9.98%
+Win Rate: 52.73%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000002 - BUY: 717.0 shares at $139.30 (Trade Value: $-99878.10)
+1970-01-01 00:00:00.000000008 - SELL: 717.0 shares at $157.35 (Trade Value: $112819.95)
+1970-01-01 00:00:00.000000181 - BUY: 822.0 shares at $136.95 (Trade Value: $-112572.90)
+1970-01-01 00:00:00.000000184 - SELL: 822.0 shares at $153.35 (Trade Value: $126053.70)
+1970-01-01 00:00:00.000000195 - BUY: 923.0 shares at $136.20 (Trade Value: $-125712.60)
+1970-01-01 00:00:00.000000222 - BUY: 1.0 shares at $130.55 (Trade Value: $-130.55)
+1970-01-01 00:00:00.000000238 - SELL: 924.0 shares at $142.25 (Trade Value: $131439.00)
+
+Total Profit: $32018.50
+Final Portfolio Value: $131309.89
+Overall Profit %: 31.31%
+
+==================================================
+
+Insufficient historical data for GAEL with time frame 1month
+
+
+ARIMA Strategy (GAEL, order=(1, 1, 2), buy=0.015, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: -1.14%
+Annualized Return: 0.00%
+Sharpe Ratio: -0.11
+Sortino Ratio: -0.17
+Max Drawdown: -11.25%
+Win Rate: 45.83%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000007 - BUY: 695.0 shares at $143.60 (Trade Value: $-99802.00)
+1970-01-01 00:00:00.000000054 - SELL: 695.0 shares at $142.25 (Trade Value: $98863.75)
+
+Total Profit: $-938.25
+Final Portfolio Value: $98863.08
+Overall Profit %: -1.14%
+
+==================================================
+
+
+ARIMA Strategy (GAEL, order=(1, 1, 2), buy=0.015, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 24.31%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.21
+Sortino Ratio: 2.53
+Max Drawdown: -9.98%
+Win Rate: 51.79%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000002 - BUY: 717.0 shares at $139.30 (Trade Value: $-99878.10)
+1970-01-01 00:00:00.000000005 - SELL: 717.0 shares at $142.50 (Trade Value: $102172.50)
+1970-01-01 00:00:00.000000007 - BUY: 687.0 shares at $148.45 (Trade Value: $-101985.15)
+1970-01-01 00:00:00.000000008 - SELL: 687.0 shares at $157.35 (Trade Value: $108099.45)
+1970-01-01 00:00:00.000000180 - BUY: 797.0 shares at $135.35 (Trade Value: $-107873.95)
+1970-01-01 00:00:00.000000184 - SELL: 797.0 shares at $153.35 (Trade Value: $122219.95)
+1970-01-01 00:00:00.000000194 - BUY: 874.0 shares at $139.45 (Trade Value: $-121879.30)
+1970-01-01 00:00:00.000000238 - SELL: 874.0 shares at $142.25 (Trade Value: $124326.50)
+
+Total Profit: $25201.90
+Final Portfolio Value: $124313.47
+Overall Profit %: 24.31%
+
+==================================================
+
+Insufficient historical data for INFY with time frame 1month
+
+
+ARIMA Strategy (INFY, order=(1, 1, 1), buy=0.01, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.73%
+Annualized Return: 0.00%
+Sharpe Ratio: 5.42
+Sortino Ratio: 9.62
+Max Drawdown: -7.26%
+Win Rate: 61.11%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1495.60 (Trade Value: $-98709.60)
+1970-01-01 00:00:00.000000055 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28828.80
+Final Portfolio Value: $128602.55
+Overall Profit %: 28.60%
+
+==================================================
+
+
+ARIMA Strategy (INFY, order=(1, 1, 1), buy=0.01, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.39%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.19
+Sortino Ratio: 2.00
+Max Drawdown: -19.22%
+Win Rate: 46.22%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1500.80 (Trade Value: $-99052.80)
+1970-01-01 00:00:00.000000239 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28485.60
+Final Portfolio Value: $128259.01
+Overall Profit %: 28.26%
+
+==================================================
+
+Insufficient historical data for INFY with time frame 1month
+
+
+ARIMA Strategy (INFY, order=(1, 1, 1), buy=0.02, sell=0.02, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.73%
+Annualized Return: 0.00%
+Sharpe Ratio: 5.42
+Sortino Ratio: 9.62
+Max Drawdown: -7.26%
+Win Rate: 61.11%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1495.60 (Trade Value: $-98709.60)
+1970-01-01 00:00:00.000000055 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28828.80
+Final Portfolio Value: $128602.55
+Overall Profit %: 28.60%
+
+==================================================
+
+
+ARIMA Strategy (INFY, order=(1, 1, 1), buy=0.02, sell=0.02, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.39%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.19
+Sortino Ratio: 2.00
+Max Drawdown: -19.22%
+Win Rate: 46.22%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1500.80 (Trade Value: $-99052.80)
+1970-01-01 00:00:00.000000239 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28485.60
+Final Portfolio Value: $128259.01
+Overall Profit %: 28.26%
+
+==================================================
+
+Insufficient historical data for INFY with time frame 1month
+
+
+ARIMA Strategy (INFY, order=(1, 1, 1), buy=0.015, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.73%
+Annualized Return: 0.00%
+Sharpe Ratio: 5.42
+Sortino Ratio: 9.62
+Max Drawdown: -7.26%
+Win Rate: 61.11%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1495.60 (Trade Value: $-98709.60)
+1970-01-01 00:00:00.000000055 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28828.80
+Final Portfolio Value: $128602.55
+Overall Profit %: 28.60%
+
+==================================================
+
+
+ARIMA Strategy (INFY, order=(1, 1, 1), buy=0.015, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.39%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.19
+Sortino Ratio: 2.00
+Max Drawdown: -19.22%
+Win Rate: 46.22%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1500.80 (Trade Value: $-99052.80)
+1970-01-01 00:00:00.000000239 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28485.60
+Final Portfolio Value: $128259.01
+Overall Profit %: 28.26%
+
+==================================================
+
+Insufficient historical data for INFY with time frame 1month
+
+
+ARIMA Strategy (INFY, order=(2, 1, 2), buy=0.01, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.73%
+Annualized Return: 0.00%
+Sharpe Ratio: 5.42
+Sortino Ratio: 9.62
+Max Drawdown: -7.26%
+Win Rate: 61.11%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1495.60 (Trade Value: $-98709.60)
+1970-01-01 00:00:00.000000055 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28828.80
+Final Portfolio Value: $128602.55
+Overall Profit %: 28.60%
+
+==================================================
+
+
+ARIMA Strategy (INFY, order=(2, 1, 2), buy=0.01, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.39%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.19
+Sortino Ratio: 2.00
+Max Drawdown: -19.22%
+Win Rate: 46.22%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1500.80 (Trade Value: $-99052.80)
+1970-01-01 00:00:00.000000239 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28485.60
+Final Portfolio Value: $128259.01
+Overall Profit %: 28.26%
+
+==================================================
+
+Insufficient historical data for INFY with time frame 1month
+
+
+ARIMA Strategy (INFY, order=(2, 1, 2), buy=0.02, sell=0.02, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 30.82%
+Annualized Return: 0.00%
+Sharpe Ratio: 5.78
+Sortino Ratio: 10.25
+Max Drawdown: -7.26%
+Win Rate: 62.50%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1495.60 (Trade Value: $-98709.60)
+1970-01-01 00:00:00.000000057 - SELL: 66.0 shares at $1964.10 (Trade Value: $129630.60)
+
+Total Profit: $30921.00
+Final Portfolio Value: $130692.66
+Overall Profit %: 30.69%
+
+==================================================
+
+
+ARIMA Strategy (INFY, order=(2, 1, 2), buy=0.02, sell=0.02, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 30.48%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.27
+Sortino Ratio: 2.12
+Max Drawdown: -19.22%
+Win Rate: 46.67%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1500.80 (Trade Value: $-99052.80)
+1970-01-01 00:00:00.000000241 - SELL: 66.0 shares at $1964.10 (Trade Value: $129630.60)
+
+Total Profit: $30577.80
+Final Portfolio Value: $130349.12
+Overall Profit %: 30.35%
+
+==================================================
+
+Insufficient historical data for INFY with time frame 1month
+
+
+ARIMA Strategy (INFY, order=(2, 1, 2), buy=0.015, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.73%
+Annualized Return: 0.00%
+Sharpe Ratio: 5.42
+Sortino Ratio: 9.62
+Max Drawdown: -7.26%
+Win Rate: 61.11%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1495.60 (Trade Value: $-98709.60)
+1970-01-01 00:00:00.000000055 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28828.80
+Final Portfolio Value: $128602.55
+Overall Profit %: 28.60%
+
+==================================================
+
+
+ARIMA Strategy (INFY, order=(2, 1, 2), buy=0.015, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.39%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.19
+Sortino Ratio: 2.00
+Max Drawdown: -19.22%
+Win Rate: 46.22%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1500.80 (Trade Value: $-99052.80)
+1970-01-01 00:00:00.000000239 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28485.60
+Final Portfolio Value: $128259.01
+Overall Profit %: 28.26%
+
+==================================================
+
+Insufficient historical data for INFY with time frame 1month
+
+
+ARIMA Strategy (INFY, order=(1, 1, 2), buy=0.01, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.73%
+Annualized Return: 0.00%
+Sharpe Ratio: 5.42
+Sortino Ratio: 9.62
+Max Drawdown: -7.26%
+Win Rate: 61.11%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1495.60 (Trade Value: $-98709.60)
+1970-01-01 00:00:00.000000055 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28828.80
+Final Portfolio Value: $128602.55
+Overall Profit %: 28.60%
+
+==================================================
+
+
+ARIMA Strategy (INFY, order=(1, 1, 2), buy=0.01, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.39%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.19
+Sortino Ratio: 2.00
+Max Drawdown: -19.22%
+Win Rate: 46.22%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1500.80 (Trade Value: $-99052.80)
+1970-01-01 00:00:00.000000239 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28485.60
+Final Portfolio Value: $128259.01
+Overall Profit %: 28.26%
+
+==================================================
+
+Insufficient historical data for INFY with time frame 1month
+
+
+ARIMA Strategy (INFY, order=(1, 1, 2), buy=0.02, sell=0.02, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 30.82%
+Annualized Return: 0.00%
+Sharpe Ratio: 5.78
+Sortino Ratio: 10.25
+Max Drawdown: -7.26%
+Win Rate: 62.50%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1495.60 (Trade Value: $-98709.60)
+1970-01-01 00:00:00.000000057 - SELL: 66.0 shares at $1964.10 (Trade Value: $129630.60)
+
+Total Profit: $30921.00
+Final Portfolio Value: $130692.66
+Overall Profit %: 30.69%
+
+==================================================
+
+
+ARIMA Strategy (INFY, order=(1, 1, 2), buy=0.02, sell=0.02, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.39%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.19
+Sortino Ratio: 2.00
+Max Drawdown: -19.22%
+Win Rate: 46.22%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1500.80 (Trade Value: $-99052.80)
+1970-01-01 00:00:00.000000239 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28485.60
+Final Portfolio Value: $128259.01
+Overall Profit %: 28.26%
+
+==================================================
+
+Insufficient historical data for INFY with time frame 1month
+
+
+ARIMA Strategy (INFY, order=(1, 1, 2), buy=0.015, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.73%
+Annualized Return: 0.00%
+Sharpe Ratio: 5.42
+Sortino Ratio: 9.62
+Max Drawdown: -7.26%
+Win Rate: 61.11%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1495.60 (Trade Value: $-98709.60)
+1970-01-01 00:00:00.000000055 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28828.80
+Final Portfolio Value: $128602.55
+Overall Profit %: 28.60%
+
+==================================================
+
+
+ARIMA Strategy (INFY, order=(1, 1, 2), buy=0.015, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 28.39%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.19
+Sortino Ratio: 2.00
+Max Drawdown: -19.22%
+Win Rate: 46.22%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 66.0 shares at $1500.80 (Trade Value: $-99052.80)
+1970-01-01 00:00:00.000000239 - SELL: 66.0 shares at $1932.40 (Trade Value: $127538.40)
+
+Total Profit: $28485.60
+Final Portfolio Value: $128259.01
+Overall Profit %: 28.26%
+
+==================================================
+
+Insufficient historical data for TCS with time frame 1month
+
+
+ARIMA Strategy (TCS, order=(1, 1, 1), buy=0.01, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 16.67%
+Annualized Return: 0.00%
+Sharpe Ratio: 3.06
+Sortino Ratio: 6.34
+Max Drawdown: -5.30%
+Win Rate: 57.45%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 25.0 shares at $3852.05 (Trade Value: $-96301.25)
+1970-01-01 00:00:00.000000048 - SELL: 25.0 shares at $4522.55 (Trade Value: $113063.75)
+
+Total Profit: $16762.50
+Final Portfolio Value: $116553.14
+Overall Profit %: 16.55%
+
+==================================================
+
+
+ARIMA Strategy (TCS, order=(1, 1, 1), buy=0.01, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 26.12%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.21
+Sortino Ratio: 2.02
+Max Drawdown: -12.64%
+Win Rate: 52.16%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 27.0 shares at $3580.60 (Trade Value: $-96676.20)
+1970-01-01 00:00:00.000000233 - SELL: 27.0 shares at $4551.70 (Trade Value: $122895.90)
+
+Total Profit: $26219.70
+Final Portfolio Value: $126000.13
+Overall Profit %: 26.00%
+
+==================================================
+
+Insufficient historical data for TCS with time frame 1month
+
+
+ARIMA Strategy (TCS, order=(1, 1, 1), buy=0.02, sell=0.02, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 16.10%
+Annualized Return: 0.00%
+Sharpe Ratio: 2.94
+Sortino Ratio: 5.98
+Max Drawdown: -5.30%
+Win Rate: 57.14%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 25.0 shares at $3852.05 (Trade Value: $-96301.25)
+1970-01-01 00:00:00.000000050 - SELL: 25.0 shares at $4499.95 (Trade Value: $112498.75)
+
+Total Profit: $16197.50
+Final Portfolio Value: $115988.70
+Overall Profit %: 15.99%
+
+==================================================
+
+
+ARIMA Strategy (TCS, order=(1, 1, 1), buy=0.02, sell=0.02, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 24.72%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.15
+Sortino Ratio: 1.92
+Max Drawdown: -12.64%
+Win Rate: 51.93%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 27.0 shares at $3580.60 (Trade Value: $-96676.20)
+1970-01-01 00:00:00.000000234 - SELL: 27.0 shares at $4499.95 (Trade Value: $121498.65)
+
+Total Profit: $24822.45
+Final Portfolio Value: $124604.28
+Overall Profit %: 24.60%
+
+==================================================
+
+Insufficient historical data for TCS with time frame 1month
+
+
+ARIMA Strategy (TCS, order=(1, 1, 1), buy=0.015, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 16.67%
+Annualized Return: 0.00%
+Sharpe Ratio: 3.06
+Sortino Ratio: 6.34
+Max Drawdown: -5.30%
+Win Rate: 57.45%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 25.0 shares at $3852.05 (Trade Value: $-96301.25)
+1970-01-01 00:00:00.000000048 - SELL: 25.0 shares at $4522.55 (Trade Value: $113063.75)
+
+Total Profit: $16762.50
+Final Portfolio Value: $116553.14
+Overall Profit %: 16.55%
+
+==================================================
+
+
+ARIMA Strategy (TCS, order=(1, 1, 1), buy=0.015, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 26.12%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.21
+Sortino Ratio: 2.02
+Max Drawdown: -12.64%
+Win Rate: 52.16%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 27.0 shares at $3580.60 (Trade Value: $-96676.20)
+1970-01-01 00:00:00.000000233 - SELL: 27.0 shares at $4551.70 (Trade Value: $122895.90)
+
+Total Profit: $26219.70
+Final Portfolio Value: $126000.13
+Overall Profit %: 26.00%
+
+==================================================
+
+Insufficient historical data for TCS with time frame 1month
+
+
+ARIMA Strategy (TCS, order=(2, 1, 2), buy=0.01, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 17.39%
+Annualized Return: 0.00%
+Sharpe Ratio: 3.19
+Sortino Ratio: 6.60
+Max Drawdown: -5.30%
+Win Rate: 58.33%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 25.0 shares at $3852.05 (Trade Value: $-96301.25)
+1970-01-01 00:00:00.000000049 - SELL: 25.0 shares at $4551.70 (Trade Value: $113792.50)
+
+Total Profit: $17491.25
+Final Portfolio Value: $117281.16
+Overall Profit %: 17.28%
+
+==================================================
+
+
+ARIMA Strategy (TCS, order=(2, 1, 2), buy=0.01, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 26.12%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.21
+Sortino Ratio: 2.02
+Max Drawdown: -12.64%
+Win Rate: 52.16%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 27.0 shares at $3580.60 (Trade Value: $-96676.20)
+1970-01-01 00:00:00.000000233 - SELL: 27.0 shares at $4551.70 (Trade Value: $122895.90)
+
+Total Profit: $26219.70
+Final Portfolio Value: $126000.13
+Overall Profit %: 26.00%
+
+==================================================
+
+Insufficient historical data for TCS with time frame 1month
+
+
+ARIMA Strategy (TCS, order=(2, 1, 2), buy=0.02, sell=0.02, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 16.10%
+Annualized Return: 0.00%
+Sharpe Ratio: 2.94
+Sortino Ratio: 5.98
+Max Drawdown: -5.30%
+Win Rate: 57.14%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 25.0 shares at $3852.05 (Trade Value: $-96301.25)
+1970-01-01 00:00:00.000000050 - SELL: 25.0 shares at $4499.95 (Trade Value: $112498.75)
+
+Total Profit: $16197.50
+Final Portfolio Value: $115988.70
+Overall Profit %: 15.99%
+
+==================================================
+
+
+ARIMA Strategy (TCS, order=(2, 1, 2), buy=0.02, sell=0.02, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 24.72%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.15
+Sortino Ratio: 1.92
+Max Drawdown: -12.64%
+Win Rate: 51.93%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 27.0 shares at $3580.60 (Trade Value: $-96676.20)
+1970-01-01 00:00:00.000000234 - SELL: 27.0 shares at $4499.95 (Trade Value: $121498.65)
+
+Total Profit: $24822.45
+Final Portfolio Value: $124604.28
+Overall Profit %: 24.60%
+
+==================================================
+
+Insufficient historical data for TCS with time frame 1month
+
+
+ARIMA Strategy (TCS, order=(2, 1, 2), buy=0.015, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 17.39%
+Annualized Return: 0.00%
+Sharpe Ratio: 3.19
+Sortino Ratio: 6.60
+Max Drawdown: -5.30%
+Win Rate: 58.33%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 25.0 shares at $3852.05 (Trade Value: $-96301.25)
+1970-01-01 00:00:00.000000049 - SELL: 25.0 shares at $4551.70 (Trade Value: $113792.50)
+
+Total Profit: $17491.25
+Final Portfolio Value: $117281.16
+Overall Profit %: 17.28%
+
+==================================================
+
+
+ARIMA Strategy (TCS, order=(2, 1, 2), buy=0.015, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 26.12%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.21
+Sortino Ratio: 2.02
+Max Drawdown: -12.64%
+Win Rate: 52.16%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 27.0 shares at $3580.60 (Trade Value: $-96676.20)
+1970-01-01 00:00:00.000000233 - SELL: 27.0 shares at $4551.70 (Trade Value: $122895.90)
+
+Total Profit: $26219.70
+Final Portfolio Value: $126000.13
+Overall Profit %: 26.00%
+
+==================================================
+
+Insufficient historical data for TCS with time frame 1month
+
+
+ARIMA Strategy (TCS, order=(1, 1, 2), buy=0.01, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 16.67%
+Annualized Return: 0.00%
+Sharpe Ratio: 3.06
+Sortino Ratio: 6.34
+Max Drawdown: -5.30%
+Win Rate: 57.45%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 25.0 shares at $3852.05 (Trade Value: $-96301.25)
+1970-01-01 00:00:00.000000048 - SELL: 25.0 shares at $4522.55 (Trade Value: $113063.75)
+
+Total Profit: $16762.50
+Final Portfolio Value: $116553.14
+Overall Profit %: 16.55%
+
+==================================================
+
+
+ARIMA Strategy (TCS, order=(1, 1, 2), buy=0.01, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 26.12%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.21
+Sortino Ratio: 2.02
+Max Drawdown: -12.64%
+Win Rate: 52.16%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 27.0 shares at $3580.60 (Trade Value: $-96676.20)
+1970-01-01 00:00:00.000000233 - SELL: 27.0 shares at $4551.70 (Trade Value: $122895.90)
+
+Total Profit: $26219.70
+Final Portfolio Value: $126000.13
+Overall Profit %: 26.00%
+
+==================================================
+
+Insufficient historical data for TCS with time frame 1month
+
+
+ARIMA Strategy (TCS, order=(1, 1, 2), buy=0.02, sell=0.02, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 16.10%
+Annualized Return: 0.00%
+Sharpe Ratio: 2.94
+Sortino Ratio: 5.98
+Max Drawdown: -5.30%
+Win Rate: 57.14%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 25.0 shares at $3852.05 (Trade Value: $-96301.25)
+1970-01-01 00:00:00.000000050 - SELL: 25.0 shares at $4499.95 (Trade Value: $112498.75)
+
+Total Profit: $16197.50
+Final Portfolio Value: $115988.70
+Overall Profit %: 15.99%
+
+==================================================
+
+
+ARIMA Strategy (TCS, order=(1, 1, 2), buy=0.02, sell=0.02, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 24.72%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.15
+Sortino Ratio: 1.92
+Max Drawdown: -12.64%
+Win Rate: 51.93%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 27.0 shares at $3580.60 (Trade Value: $-96676.20)
+1970-01-01 00:00:00.000000234 - SELL: 27.0 shares at $4499.95 (Trade Value: $121498.65)
+
+Total Profit: $24822.45
+Final Portfolio Value: $124604.28
+Overall Profit %: 24.60%
+
+==================================================
+
+Insufficient historical data for TCS with time frame 1month
+
+
+ARIMA Strategy (TCS, order=(1, 1, 2), buy=0.015, sell=0.01, time_frame=3months) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 16.67%
+Annualized Return: 0.00%
+Sharpe Ratio: 3.06
+Sortino Ratio: 6.34
+Max Drawdown: -5.30%
+Win Rate: 57.45%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 25.0 shares at $3852.05 (Trade Value: $-96301.25)
+1970-01-01 00:00:00.000000048 - SELL: 25.0 shares at $4522.55 (Trade Value: $113063.75)
+
+Total Profit: $16762.50
+Final Portfolio Value: $116553.14
+Overall Profit %: 16.55%
+
+==================================================
+
+
+ARIMA Strategy (TCS, order=(1, 1, 2), buy=0.015, sell=0.01, time_frame=1year) Detailed Report
+==============================
+
+Performance Metrics:
+-------------------
+Total Return: 26.12%
+Annualized Return: 0.00%
+Sharpe Ratio: 1.21
+Sortino Ratio: 2.02
+Max Drawdown: -12.64%
+Win Rate: 52.16%
+
+Trade Details:
+--------------
+1970-01-01 00:00:00.000000001 - BUY: 27.0 shares at $3580.60 (Trade Value: $-96676.20)
+1970-01-01 00:00:00.000000233 - SELL: 27.0 shares at $4551.70 (Trade Value: $122895.90)
+
+Total Profit: $26219.70
+Final Portfolio Value: $126000.13
+Overall Profit %: 26.00%
+
+==================================================
+
