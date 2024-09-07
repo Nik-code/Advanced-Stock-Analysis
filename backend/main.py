@@ -19,6 +19,7 @@ import joblib
 from app.services.llm_integration import GPT4Processor
 import xml.etree.ElementTree as ET
 from app.models.backtesting import backtest_lstm_model, backtest_arima_model
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -111,6 +112,21 @@ async def get_historical_data(code: str, timeFrame: str = '1year'):
 
 @app.get("/api/login")
 async def login():
+    """
+    Endpoint to initiate the login process for the Zerodha trading platform.
+
+    This endpoint returns the login URL that the user needs to visit in order to authenticate
+    and generate a session token. The user will be redirected to the Zerodha login page,
+    where they can enter their credentials.
+
+    Returns:
+    - dict: A dictionary containing the login URL.
+
+    Example of a successful response:
+    {
+        "login_url": "https://zerodha.com/login"
+    }
+    """
     login_url = zerodha_service.get_login_url()
     return {"login_url": login_url}
 
@@ -249,8 +265,34 @@ async def compare_stocks(symbols: str, days: int = 365):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class PredictionRequest(BaseModel):
+    data: List[float]
+
 @app.post("/api/predict/{stock_code}")
-async def predict_stock(stock_code: str, data: List[float]):
+async def predict_stock(stock_code: str, request: PredictionRequest):
+    """
+    Generate stock price predictions using LSTM and ARIMA models.
+
+    This function takes a stock code and historical price data, then uses pre-trained
+    LSTM and ARIMA models to generate future price predictions. It also calculates
+    past predictions for comparison.
+
+    Args:
+        stock_code (str): The code or symbol of the stock to predict.
+        request (PredictionRequest): A request object containing historical closing prices for the stock.
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - lstm_predictions: Future predictions from the LSTM model.
+            - arima_predictions: Future predictions from the ARIMA model.
+            - ensemble_predictions: Combined predictions from both models.
+            - confidence_intervals: Upper and lower bounds for predictions.
+            - past_predictions_lstm: Past predictions from the LSTM model.
+            - past_predictions_arima: Past predictions from the ARIMA model.
+
+    Raises:
+        HTTPException: If there's an error during the prediction process.
+    """
     try:
         logger.info(f"Received prediction request for {stock_code}")
         model_dir = os.path.join(os.path.dirname(__file__), 'models')
@@ -267,7 +309,7 @@ async def predict_stock(stock_code: str, data: List[float]):
         arima_predictor = joblib.load(arima_model_path)
         scaler = joblib.load(scaler_path)
 
-        data = np.array(data).reshape(-1, 1)
+        data = np.array(request.data).reshape(-1, 1)
         scaled_data = scaler.transform(data)
 
         # Generate past predictions using a rolling window
