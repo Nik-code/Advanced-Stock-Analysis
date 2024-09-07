@@ -9,6 +9,8 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 logger = logging.getLogger(__name__)
 
+# Remove the import of ARIMAStrategy and run_strategy_test from here
+
 class GPT4Processor:
     def __init__(self):
         logger.info("Initializing GPT4Processor")
@@ -48,11 +50,21 @@ class GPT4Processor:
         
         return sentiment_score, explanation
 
-    def final_analysis(self, news_sentiment, sentiment_explanation, lstm_prediction, technical_indicators, historical_data):
+    async def run_arima_strategy(self, stock_code, time_frame='1year'):
+        from backend.scripts.arima_strategy import run_strategy_test
+        arima_results = await run_strategy_test(stock_code, time_frame=time_frame)
+        return arima_results
+
+    async def final_analysis(self, stock_code, news_sentiment, sentiment_explanation, lstm_prediction, technical_indicators, historical_data):
         logger.info("Generating final analysis")
+        
+        # Run ARIMA strategy
+        arima_results = await self.run_arima_strategy(stock_code)
+        
         messages = [
             {"role": "system", "content": "You are a financial analyst for the Indian Stock Market. Based on the given information, provide a detailed analysis of the stock's performance and future outlook. Include key factors influencing your decision and recommend whether a shareholder should buy, hold, or sell. Structure your response with clear sections and bullet points for easy readability."},
             {"role": "user", "content": f"""
+            Stock Code: {stock_code}
             News Sentiment Score: {news_sentiment}
             News Sentiment Analysis: {sentiment_explanation}
             LSTM Model Prediction: {lstm_prediction}
@@ -63,6 +75,12 @@ class GPT4Processor:
             - RSI: {technical_indicators['rsi']}
             - MACD: {technical_indicators['macd']}
             - ATR: {technical_indicators['atr']}
+            ARIMA Strategy Results:
+            - Total Return: {arima_results['total_return']}
+            - Annualized Return: {arima_results['annualized_return']}
+            - Sharpe Ratio: {arima_results['sharpe_ratio']}
+            - Max Drawdown: {arima_results['max_drawdown']}
+            - Win Rate: {arima_results['win_rate']}
             """},
         ]
         analysis = self.process_text(messages)
