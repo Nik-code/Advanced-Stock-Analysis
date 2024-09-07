@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.services.data_collection import fetch_historical_data, fetch_process_store_data, update_influxdb_with_latest_data, fetch_news_data, process_news_data
@@ -7,7 +11,6 @@ from dotenv import load_dotenv, find_dotenv, set_key
 import logging
 from app.services.zerodha_service import ZerodhaService
 from app.api import stocks
-import os
 import pandas as pd
 import numpy as np
 from typing import List
@@ -59,6 +62,43 @@ async def get_quote(instruments: str):
 
 @app.get("/api/historical/{code}")
 async def get_historical_data(code: str, timeFrame: str = '1year'):
+    """
+    Fetch historical data for a given stock code.
+
+    Parameters:
+    - code (str): The stock code for which historical data is requested.
+    - timeFrame (str): The time frame for the historical data. 
+                       It can be one of the following values:
+                       - '1month'
+                       - '3months'
+                       - '1year'
+                       - '5years'
+
+    Returns:
+    - List[dict]: A list of historical data records for the specified stock code. Each record contains:
+        - date (str): The date of the record in ISO 8601 format.
+        - open (float): The opening price of the stock on that date.
+        - high (float): The highest price of the stock on that date.
+        - low (float): The lowest price of the stock on that date.
+        - close (float): The closing price of the stock on that date.
+        - volume (int): The trading volume of the stock on that date.
+
+    Example of a successful response:
+    [
+        {
+            "date": "2024-08-09T00:00:00+05:30",
+            "open": 4227.95,
+            "high": 4251.5,
+            "low": 4215.0,
+            "close": 4230.05,
+            "volume": 169602
+        },
+        ...
+    ]
+
+    Raises:
+    - HTTPException: If no data is found for the stock code or if an internal error occurs.
+    """
     try:
         data = await fetch_historical_data(code, timeFrame)
         if data is None:
@@ -387,6 +427,40 @@ async def test_fetch_news(symbol: str):
     except Exception as e:
         logger.error(f"Error fetching news for {symbol}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/analysis/{stock_code}")
+async def get_stock_analysis(stock_code: str):
+    try:
+        # Fetch necessary data (you may need to implement these functions)
+        news_data = await fetch_news_data(stock_code)
+        historical_data = await fetch_historical_data(stock_code)
+        technical_indicators = calculate_technical_indicators(historical_data)
+        lstm_prediction = get_lstm_prediction(stock_code)
+
+        gpt4_processor = GPT4Processor()
+        news_sentiment, sentiment_explanation = gpt4_processor.analyze_news_sentiment(news_data)
+        
+        final_analysis = await gpt4_processor.final_analysis(
+            stock_code,
+            news_sentiment,
+            sentiment_explanation,
+            lstm_prediction,
+            technical_indicators,
+            historical_data
+        )
+
+        return {
+            "stock_code": stock_code,
+            "news_sentiment": news_sentiment,
+            "sentiment_explanation": sentiment_explanation,
+            "lstm_prediction": lstm_prediction,
+            "technical_indicators": technical_indicators,
+            "final_analysis": final_analysis
+        }
+    except Exception as e:
+        logger.error(f"Error generating analysis for {stock_code}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating analysis for {stock_code}")
 
 
 if __name__ == "__main__":
