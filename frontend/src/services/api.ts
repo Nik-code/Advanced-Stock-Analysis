@@ -84,3 +84,13 @@ export const getPeerComparison = async (symbol: string) => {
   const response = await api.get(`/api/stocks/${symbol}/peers`);
   return response.data;
 };
+
+export const getPrediction = async (stockCode: string, historicalData: number[]) => {
+  const response = await api.post(`/api/predict/${stockCode}`, { data: historicalData });
+  return response.data;
+};
+
+export const getSentiment = async (symbol: string) => {
+  const response = await api.get(`/api/sentiment/${symbol}`);
+  return response.data;
+};

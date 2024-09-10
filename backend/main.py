@@ -384,109 +384,84 @@ class PredictionRequest(BaseModel):
     data: List[float]
 
 
-@app.post("/api/predict/{stock_code}") # TODO: Not functioning at all
-async def predict_stock(stock_code: str, request: PredictionRequest):
-    """
-    Generate stock price predictions using LSTM and ARIMA models.
-
-    This function takes a stock code and historical price data, then uses pre-trained
-    LSTM and ARIMA models to generate future price predictions. It also calculates
-    past predictions for comparison.
-
-    Args:
-        stock_code (str): The code or symbol of the stock to predict.
-        request (PredictionRequest): A request object containing historical closing prices for the stock.
-
-    Returns:
-        dict: A dictionary containing the following keys:
-            - lstm_predictions: Future predictions from the LSTM model.
-            - arima_predictions: Future predictions from the ARIMA model.
-            - ensemble_predictions: Combined predictions from both models.
-            - confidence_intervals: Upper and lower bounds for predictions.
-            - past_predictions_lstm: Past predictions from the LSTM model.
-            - past_predictions_arima: Past predictions from the ARIMA model.
-
-    Raises:
-        HTTPException: If there's an error during the prediction process.
-    """
+@app.get("/api/predict/{stock_code}")
+async def predict_stock(stock_code: str):
     try:
         logger.info(f"Received prediction request for {stock_code}")
         model_dir = os.path.join(os.path.dirname(__file__), 'models')
         lstm_model_path = os.path.join(model_dir, f'{stock_code}_lstm_model.h5')
-        arima_model_path = os.path.join(model_dir, f'{stock_code}_arima_model.pkl')
         scaler_path = os.path.join(model_dir, f'{stock_code}_scaler.pkl')
 
-        if not os.path.exists(lstm_model_path) or not os.path.exists(arima_model_path) or not os.path.exists(scaler_path):
+        if not os.path.exists(lstm_model_path) or not os.path.exists(scaler_path):
             logger.error(f"Models or scaler not found for {stock_code}")
             raise HTTPException(status_code=404, detail=f"Models not found for {stock_code}")
 
         lstm_predictor = LSTMStockPredictor(input_shape=(60, 1))
         lstm_predictor.load_model(lstm_model_path)
-        arima_predictor = joblib.load(arima_model_path)
         scaler = joblib.load(scaler_path)
 
-        data = np.array(request.data).reshape(-1, 1)
-        scaled_data = scaler.transform(data)
+        # Fetch historical data
+        historical_data = await fetch_historical_data(stock_code, '1year')
+        if historical_data is None:
+            raise HTTPException(status_code=404, detail=f"No historical data found for {stock_code}")
 
-        # Generate past predictions using a rolling window
-        past_predictions_lstm = []
-        past_predictions_arima = []
+        close_prices = historical_data['close'].values.reshape(-1, 1)
+        scaled_data = scaler.transform(close_prices)
+
+        # Generate past predictions
+        past_predictions = []
         for i in range(60, len(scaled_data)):
             X = scaled_data[i-60:i].reshape(1, 60, 1)
-            lstm_prediction = lstm_predictor.predict(X)
-            arima_prediction = arima_predictor.predict(1)
-            past_predictions_lstm.append(lstm_prediction[0][0])
-            past_predictions_arima.append(arima_prediction[0])
-        
-        past_predictions_lstm = scaler.inverse_transform(np.array(past_predictions_lstm).reshape(-1, 1))
-        past_predictions_arima = scaler.inverse_transform(np.array(past_predictions_arima).reshape(-1, 1))
-        
-        # Generate future predictions with confidence intervals
-        future_predictions_lstm = []
-        future_predictions_arima = []
-        confidence_intervals = []
-        num_simulations = 100
-        forecast_horizon = 7
+            prediction = lstm_predictor.predict(X)
+            past_predictions.append(prediction[0][0])
+
+        past_predictions = scaler.inverse_transform(np.array(past_predictions).reshape(-1, 1))
+
+        # Generate future predictions
+        future_predictions = []
         last_sequence = scaled_data[-60:].reshape(1, 60, 1)
+        for _ in range(7):  # Predict next 7 days
+            prediction = lstm_predictor.predict(last_sequence)
+            future_predictions.append(prediction[0][0])
+            last_sequence = np.roll(last_sequence, -1, axis=1)
+            last_sequence[0, -1, 0] = prediction[0][0]
 
-        for _ in range(forecast_horizon):
-            simulations_lstm = []
-            for _ in range(num_simulations):
-                lstm_prediction = lstm_predictor.predict(last_sequence)
-                simulations_lstm.append(lstm_prediction[0][0])
-                last_sequence = np.roll(last_sequence, -1, axis=1)
-                last_sequence[0, -1, 0] = lstm_prediction[0][0]
-
-            arima_prediction = arima_predictor.predict(1)
-
-            mean_prediction_lstm = np.mean(simulations_lstm)
-            ci_lower = np.percentile(simulations_lstm, 5)
-            ci_upper = np.percentile(simulations_lstm, 95)
-
-            future_predictions_lstm.append(mean_prediction_lstm)
-            future_predictions_arima.append(arima_prediction[0])
-            confidence_intervals.append((ci_lower, ci_upper))
-
-        future_predictions_lstm = scaler.inverse_transform(np.array(future_predictions_lstm).reshape(-1, 1))
-        future_predictions_arima = scaler.inverse_transform(np.array(future_predictions_arima).reshape(-1, 1))
-        confidence_intervals = scaler.inverse_transform(np.array(confidence_intervals))
-
-        # Combine LSTM and ARIMA predictions (simple average)
-        ensemble_predictions = (future_predictions_lstm + future_predictions_arima) / 2
+        future_predictions = scaler.inverse_transform(np.array(future_predictions).reshape(-1, 1))
 
         logger.info(f"Successfully generated predictions for {stock_code}")
 
         return {
-            "lstm_predictions": future_predictions_lstm.flatten().tolist(),
-            "arima_predictions": future_predictions_arima.flatten().tolist(),
-            "ensemble_predictions": ensemble_predictions.flatten().tolist(),
-            "confidence_intervals": confidence_intervals.tolist(),
-            "past_predictions_lstm": past_predictions_lstm.flatten().tolist(),
-            "past_predictions_arima": past_predictions_arima.flatten().tolist()
+            "past_predictions": past_predictions.flatten().tolist(),
+            "predictions": future_predictions.flatten().tolist()
         }
     except Exception as e:
         logger.error(f"Error making prediction for {stock_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error making prediction for {stock_code}: {str(e)}")
+
+
+@app.get("/api/sentiment/{symbol}")
+async def get_sentiment(symbol: str):
+    try:
+        logger.info(f"Fetching news data for {symbol}")
+        news_data = await fetch_news_data(symbol)
+        logger.info(f"Fetched {len(news_data)} news articles for {symbol}")
+
+        historical_data = await fetch_historical_data(symbol, '1year')
+        if historical_data is None:
+            raise HTTPException(status_code=404, detail=f"No data found for stock symbol {symbol}")
+
+        close_prices = historical_data['close'].tolist()
+        prediction_request = PredictionRequest(data=close_prices)
+        lstm_prediction = await predict_stock(symbol, prediction_request)
+
+        logger.info(f"Processing news data for {symbol}")
+        news_analysis = await llm_processor.process_news_data(news_data, lstm_prediction['predictions'][0], symbol, historical_data)
+        logger.info(f"Sentiment analysis result for {symbol}: {news_analysis}")
+
+        return news_analysis
+    except Exception as e:
+        logger.error(f"Error analyzing sentiment for {symbol}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/backtest/{stock_code}") # TODO: Gives bad predictions
@@ -575,34 +550,6 @@ async def backtest_stock_arima(stock_code: str, days: str = '1year'):
     except Exception as e:
         logger.error(f"Error during ARIMA backtesting for {stock_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error during ARIMA backtesting for {stock_code}: {str(e)}")
-
-
-@app.get("/api/sentiment/{symbol}")  # TODO: Doesn't work
-async def get_sentiment(symbol: str):
-    try:
-        logger.info(f"Fetching news data for {symbol}")
-        news_data = await fetch_news_data(symbol)
-        logger.info(f"Fetched {len(news_data)} news articles for {symbol}")
-
-        # Get LSTM prediction
-        historical_data = await fetch_historical_data(symbol, '1year')
-        if historical_data is None:
-            raise HTTPException(status_code=404, detail=f"No data found for stock symbol {symbol}")
-        close_prices = historical_data['close'].tolist()
-        lstm_prediction = await predict_stock(symbol, close_prices)
-
-        logger.info(f"Processing news data for {symbol}")
-        news_analysis = await process_news_data(news_data, lstm_prediction['predictions'][0], symbol, historical_data)
-        logger.info(f"Sentiment analysis result for {symbol}: {news_analysis}")
-        return {
-            "sentiment": news_analysis['sentiment'],
-            "explanation": news_analysis['explanation'],
-            "analysis": news_analysis['analysis'],
-            "lstm_prediction": lstm_prediction['predictions'][0]
-        }
-    except Exception as e:
-        logger.error(f"Error analyzing sentiment for {symbol}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/test/news/{symbol}")

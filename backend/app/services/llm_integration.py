@@ -3,13 +3,14 @@ import logging
 import os
 from dotenv import load_dotenv
 import re
+from app.services.technical_indicators import calculate_rsi, calculate_sma, calculate_ema, calculate_macd, calculate_bollinger_bands, calculate_atr
+
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 logger = logging.getLogger(__name__)
 
-# Remove the import of ARIMAStrategy and run_strategy_test from here
 
 class GPT4Processor:
     def __init__(self):
@@ -86,3 +87,41 @@ class GPT4Processor:
         analysis = self.process_text(messages)
         logger.info(f"Final analysis: {analysis}")
         return analysis
+
+    async def process_news_data(self, news_data, lstm_prediction, symbol, historical_data):
+        sentiment_score, explanation = self.analyze_news_sentiment(news_data)
+        technical_indicators = await self.fetch_technical_indicators(symbol)
+        final_analysis = await self.final_analysis(
+            symbol,
+            sentiment_score,
+            explanation,
+            lstm_prediction,
+            technical_indicators,
+            historical_data
+        )
+        return {
+            'sentiment': sentiment_score,
+            'explanation': explanation,
+            'analysis': final_analysis
+        }
+
+    async def fetch_technical_indicators(self, symbol):
+        from app.services.data_collection import fetch_historical_data
+        historical_data = await fetch_historical_data(symbol, '1year')
+        if historical_data is None:
+            logger.error(f"No historical data found for {symbol}")
+            return None
+
+        close_prices = historical_data['close']
+        high_prices = historical_data['high']
+        low_prices = historical_data['low']
+
+        indicators = {
+            'sma_20': calculate_sma(close_prices, 20).iloc[-1],
+            'ema_50': calculate_ema(close_prices, 50).iloc[-1],
+            'rsi': calculate_rsi(close_prices).iloc[-1],
+            'macd': calculate_macd(close_prices)[0].iloc[-1],  # MACD line
+            'atr': calculate_atr(high_prices, low_prices, close_prices).iloc[-1]
+        }
+
+        return indicators

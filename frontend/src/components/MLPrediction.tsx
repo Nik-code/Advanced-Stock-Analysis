@@ -26,7 +26,7 @@ const MLPrediction: React.FC<MLPredictionProps> = ({ stockCode, historicalData }
     setError(null);
     try {
       const [predictionResponse, sentimentResponse] = await Promise.all([
-        axios.post(`http://localhost:8000/api/predict/${stockCode}`, historicalData.map(d => d.close)),
+        axios.post(`http://localhost:8000/api/predict/${stockCode}`, { data: historicalData.map(d => d.close) }),
         axios.get(`http://localhost:8000/api/sentiment/${stockCode}`)
       ]);
       setPredictions(predictionResponse.data.predictions);
