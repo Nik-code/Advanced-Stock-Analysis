@@ -391,14 +391,16 @@ async def predict_stock(stock_code: str):
         model_dir = os.path.join(os.path.dirname(__file__), 'models')
         lstm_model_path = os.path.join(model_dir, f'{stock_code}_lstm_model.h5')
         scaler_path = os.path.join(model_dir, f'{stock_code}_scaler.pkl')
+        arima_model_path = os.path.join(model_dir, f'{stock_code}_arima_model.pkl')
 
-        if not os.path.exists(lstm_model_path) or not os.path.exists(scaler_path):
+        if not os.path.exists(lstm_model_path) or not os.path.exists(scaler_path) or not os.path.exists(arima_model_path):
             logger.error(f"Models or scaler not found for {stock_code}")
             raise HTTPException(status_code=404, detail=f"Models not found for {stock_code}")
 
         lstm_predictor = LSTMStockPredictor(input_shape=(60, 1))
         lstm_predictor.load_model(lstm_model_path)
         scaler = joblib.load(scaler_path)
+        arima_predictor = joblib.load(arima_model_path)
 
         # Fetch historical data
         historical_data = await fetch_historical_data(stock_code, '1year')
@@ -408,31 +410,37 @@ async def predict_stock(stock_code: str):
         close_prices = historical_data['close'].values.reshape(-1, 1)
         scaled_data = scaler.transform(close_prices)
 
-        # Generate past predictions
-        past_predictions = []
+        # Generate past predictions for LSTM
+        lstm_past_predictions = []
         for i in range(60, len(scaled_data)):
             X = scaled_data[i-60:i].reshape(1, 60, 1)
             prediction = lstm_predictor.predict(X)
-            past_predictions.append(prediction[0][0])
+            lstm_past_predictions.append(prediction[0][0])
 
-        past_predictions = scaler.inverse_transform(np.array(past_predictions).reshape(-1, 1))
+        lstm_past_predictions = scaler.inverse_transform(np.array(lstm_past_predictions).reshape(-1, 1))
 
-        # Generate future predictions
-        future_predictions = []
+        # Generate future predictions for LSTM
+        lstm_future_predictions = []
         last_sequence = scaled_data[-60:].reshape(1, 60, 1)
         for _ in range(7):  # Predict next 7 days
             prediction = lstm_predictor.predict(last_sequence)
-            future_predictions.append(prediction[0][0])
+            lstm_future_predictions.append(prediction[0][0])
             last_sequence = np.roll(last_sequence, -1, axis=1)
             last_sequence[0, -1, 0] = prediction[0][0]
 
-        future_predictions = scaler.inverse_transform(np.array(future_predictions).reshape(-1, 1))
+        lstm_future_predictions = scaler.inverse_transform(np.array(lstm_future_predictions).reshape(-1, 1))
+
+        # Generate predictions for ARIMA
+        arima_past_predictions = arima_predictor.predict(len(close_prices) - 60)
+        arima_future_predictions = arima_predictor.predict(7)
 
         logger.info(f"Successfully generated predictions for {stock_code}")
 
         return {
-            "past_predictions": past_predictions.flatten().tolist(),
-            "predictions": future_predictions.flatten().tolist()
+            "lstm_past_predictions": lstm_past_predictions.flatten().tolist(),
+            "lstm_future_predictions": lstm_future_predictions.flatten().tolist(),
+            "arima_past_predictions": arima_past_predictions.tolist(),
+            "arima_future_predictions": arima_future_predictions.tolist()
         }
     except Exception as e:
         logger.error(f"Error making prediction for {stock_code}: {str(e)}")
@@ -474,7 +482,7 @@ async def backtest_stock(stock_code: str, days: str = '1year'):
 
     Parameters:
     - stock_code (str): The stock symbol for which backtesting is requested (e.g., "RELIANCE").
-    - days (str): The time frame for historical data. Default is '1year'. 
+    - days (str): The time frame for historical data. Default is '1year'.
                   It can be one of the following values:
                   - '1month'
                   - '3months'
