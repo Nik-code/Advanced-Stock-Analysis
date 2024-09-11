@@ -6,6 +6,9 @@ from tensorflow.keras.models import load_model
 import joblib
 import logging
 import os
+from pydantic import BaseModel
+from app.models.backtesting import backtest_lstm_model, backtest_arima_model
+from app.services.data_collection import fetch_historical_data
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
