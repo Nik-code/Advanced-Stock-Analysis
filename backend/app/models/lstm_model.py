@@ -1,29 +1,32 @@
 import numpy as np
 from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.layers import LSTM, Dense, Dropout, BatchNormalization
 from tensorflow.keras.optimizers import Adam
 from sklearn.preprocessing import MinMaxScaler
 import joblib
 
+
 class LSTMModel:
-    def __init__(self, input_shape, sequence_length=60, units=50, dropout=0.2, learning_rate=0.001):
+    def __init__(self, input_shape):
         self.input_shape = input_shape
-        self.sequence_length = sequence_length
-        self.units = units
-        self.dropout = dropout
-        self.learning_rate = learning_rate
         self.model = self.build_model()
         self.scaler = MinMaxScaler(feature_range=(0, 1))
 
     def build_model(self):
         model = Sequential([
-            LSTM(units=self.units, return_sequences=True, input_shape=self.input_shape),
-            Dropout(self.dropout),
-            LSTM(units=self.units, return_sequences=False),
-            Dropout(self.dropout),
+            LSTM(units=64, return_sequences=True, input_shape=self.input_shape),
+            BatchNormalization(),
+            Dropout(0.2),
+            LSTM(units=64, return_sequences=True),
+            BatchNormalization(),
+            Dropout(0.2),
+            LSTM(units=32, return_sequences=False),
+            BatchNormalization(),
+            Dropout(0.2),
+            Dense(units=16, activation='relu'),
             Dense(units=1)
         ])
-        model.compile(optimizer=Adam(learning_rate=self.learning_rate), loss='mean_squared_error')
+        model.compile(optimizer=Adam(learning_rate=0.001), loss='huber')
         return model
 
     def train(self, X_train, y_train, epochs=100, batch_size=32, validation_split=0.1):
@@ -36,12 +39,12 @@ class LSTMModel:
         return self.scaler.inverse_transform(predictions)
 
     def save(self, path):
-        self.model.save(f"{path}_model.h5")
-        joblib.dump(self.scaler, f"{path}_scaler.pkl")
+        self.model.save(f"{path}.keras")
+        joblib.dump(self.scaler, f"{path}_scaler.joblib")
 
     @classmethod
     def load(cls, path):
-        model = cls(input_shape=(60, 1))  # Adjust input_shape as needed
-        model.model = load_model(f"{path}_model.h5")
-        model.scaler = joblib.load(f"{path}_scaler.pkl")
+        model = cls((60, 1))
+        model.model = load_model(f"{path}.keras")
+        model.scaler = joblib.load(f"{path}_scaler.joblib")
         return model

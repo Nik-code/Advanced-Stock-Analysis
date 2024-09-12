@@ -10,6 +10,7 @@ from app.models.arima_model import ARIMAStockPredictor
 from app.services.data_collection import fetch_historical_data
 import asyncio
 import logging
+from app.models.Prophet import ProphetModel
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,8 @@ async def train_and_save_models(stock_code):
             'LSTM': LSTMModel(input_shape=(60, 1)),
             'XGBoost': XGBoostModel(),
             'GRU': GRUModel(input_shape=(60, 1)),
-            'ARIMA': ARIMAStockPredictor()
+            'ARIMA': ARIMAStockPredictor(),
+            'Prophet': ProphetModel()
         }
 
         for name, model in models.items():
@@ -44,8 +46,10 @@ async def train_and_save_models(stock_code):
                     model.train(X_train, y_train)
                 elif name == 'XGBoost':
                     model.train(close_prices)
-                else:  # ARIMA
+                elif name == 'ARIMA':
                     model.train(close_prices.flatten())
+                elif name == 'Prophet':
+                    model.train(pd.Series(close_prices, index=historical_data.index))
 
                 # Save the model
                 save_path = os.path.join(MODEL_SAVE_DIR, f'{stock_code}_{name}_model')
@@ -69,21 +73,21 @@ def prepare_data(data, lookback=60):
     return np.array(X), np.array(y)
 
 
-def backtest_model(model, X_test, y_test):
+def backtest_model(model, X_test, y_test, historical_data=None):
     if isinstance(model, (LSTMModel, GRUModel)):
-        # For LSTM and GRU models, we need to reshape the input
-        X_test_reshaped = X_test.reshape((X_test.shape[0], 1, X_test.shape[1]))
+        X_test_reshaped = X_test.reshape((X_test.shape[0], X_test.shape[1], 1))
         predictions = model.predict(X_test_reshaped).flatten()
     elif isinstance(model, XGBoostModel):
-        # For XGBoost, we can use X_test directly
         predictions = model.predict(X_test)
     elif isinstance(model, ARIMAStockPredictor):
-        # For ARIMA, we need to use the forecast method
-        predictions = model.forecast(steps=len(y_test))
+        predictions = model.predict(steps=len(y_test))
+    elif isinstance(model, ProphetModel):
+        future_dates = pd.date_range(start=historical_data.index[-1] + pd.Timedelta(days=1), periods=len(y_test))
+        forecast = model.predict(steps=len(y_test))
+        predictions = forecast['yhat'].values
     else:
         raise ValueError(f"Unsupported model type: {type(model)}")
 
-    # Ensure predictions and y_test have the same length
     predictions = predictions[:len(y_test)]
     y_test = y_test[:len(predictions)]
 
@@ -104,8 +108,9 @@ async def compare_models(stock_code):
 
     results = {}
     for name, model in models.items():
-        mse, mae = backtest_model(model, X_test, y_test)
-        results[name] = {'MSE': mse, 'MAE': mae}
+        if model is not None:
+            mse, mae = backtest_model(model, X_test, y_test, historical_data)
+            results[name] = {'MSE': mse, 'MAE': mae}
 
     # Sort models by MSE
     sorted_results = sorted(results.items(), key=lambda x: x[1]['MSE'])
