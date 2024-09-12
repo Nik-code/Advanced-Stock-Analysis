@@ -18,39 +18,47 @@ os.makedirs(MODEL_SAVE_DIR, exist_ok=True)
 
 
 async def train_and_save_models(stock_code):
-    # Fetch 5 years of historical data
-    historical_data = await fetch_historical_data(stock_code, '5years')
-    if historical_data is None or len(historical_data) < 100:
-        logger.error(f"Insufficient data for {stock_code}")
+    try:
+        # Fetch 5 years of historical data
+        historical_data = await fetch_historical_data(stock_code, '5years')
+        if historical_data is None or len(historical_data) < 100:
+            logger.error(f"Insufficient data for {stock_code}")
+            return None
+
+        close_prices = historical_data['close'].values
+
+        # Prepare data
+        X, y = prepare_data(close_prices)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        models = {
+            'LSTM': LSTMModel(input_shape=(60, 1)),
+            'XGBoost': XGBoostModel(),
+            'GRU': GRUModel(input_shape=(60, 1)),
+            'ARIMA': ARIMAStockPredictor()
+        }
+
+        for name, model in models.items():
+            try:
+                if name in ['LSTM', 'GRU']:
+                    model.train(X_train, y_train)
+                elif name == 'XGBoost':
+                    model.train(close_prices)
+                else:  # ARIMA
+                    model.train(close_prices.flatten())
+
+                # Save the model
+                save_path = os.path.join(MODEL_SAVE_DIR, f'{stock_code}_{name}_model')
+                model.save(save_path)
+                logger.info(f"Saved {name} model for {stock_code}")
+            except Exception as e:
+                logger.error(f"Error training or saving {name} model for {stock_code}: {str(e)}")
+                models[name] = None
+
+        return models
+    except Exception as e:
+        logger.error(f"Error in train_and_save_models for {stock_code}: {str(e)}")
         return None
-
-    close_prices = historical_data['close'].values
-
-    # Prepare data
-    X, y = prepare_data(close_prices)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    models = {
-        'LSTM': LSTMModel(input_shape=(60, 1)),
-        'XGBoost': XGBoostModel(),
-        'GRU': GRUModel(input_shape=(60, 1)),
-        'ARIMA': ARIMAStockPredictor()
-    }
-
-    for name, model in models.items():
-        if name in ['LSTM', 'GRU']:
-            model.train(X_train, y_train)
-        elif name == 'XGBoost':
-            model.train(close_prices)
-        else:  # ARIMA
-            model.train(close_prices.flatten())
-
-        # Save the model
-        save_path = os.path.join(MODEL_SAVE_DIR, f'{stock_code}_{name}_model.pkl')
-        model.save(save_path)
-        logger.info(f"Saved {name} model for {stock_code}")
-
-    return models
 
 
 def prepare_data(data, lookback=60):
