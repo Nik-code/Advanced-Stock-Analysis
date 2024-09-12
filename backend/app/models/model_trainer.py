@@ -74,55 +74,77 @@ def prepare_data(data, lookback=60):
 
 
 def backtest_model(model, X_test, y_test, historical_data=None):
-    if isinstance(model, (LSTMModel, GRUModel)):
-        X_test_reshaped = X_test.reshape((X_test.shape[0], X_test.shape[1], 1))
-        predictions = model.predict(X_test_reshaped).flatten()
-    elif isinstance(model, XGBoostModel):
-        predictions = model.predict(X_test)
-    elif isinstance(model, ARIMAStockPredictor):
-        predictions = model.predict(steps=len(y_test))
-    elif isinstance(model, ProphetModel):
-        future_dates = pd.date_range(start=historical_data.index[-1] + pd.Timedelta(days=1), periods=len(y_test))
-        forecast = model.predict(steps=len(y_test))
-        predictions = forecast['yhat'].values
-    else:
-        raise ValueError(f"Unsupported model type: {type(model)}")
+    try:
+        if isinstance(model, (LSTMModel, GRUModel)):
+            X_test_reshaped = X_test.reshape((X_test.shape[0], X_test.shape[1], 1))
+            predictions = model.predict(X_test_reshaped).flatten()
+        elif isinstance(model, XGBoostModel):
+            predictions = model.predict(X_test)
+        elif isinstance(model, ARIMAStockPredictor):
+            predictions = model.predict(steps=len(y_test))
+        elif isinstance(model, ProphetModel):
+            if historical_data is None:
+                raise ValueError("Historical data is required for Prophet model backtesting")
+            future_dates = pd.date_range(start=historical_data.index[-1] + pd.Timedelta(days=1), periods=len(y_test))
+            forecast = model.predict(steps=len(y_test))
+            predictions = forecast['yhat'].values
+        else:
+            raise ValueError(f"Unsupported model type: {type(model)}")
 
-    predictions = predictions[:len(y_test)]
-    y_test = y_test[:len(predictions)]
+        predictions = predictions[:len(y_test)]
+        y_test = y_test[:len(predictions)]
 
-    mse = mean_squared_error(y_test, predictions)
-    mae = mean_absolute_error(y_test, predictions)
-    return mse, mae
+        mse = mean_squared_error(y_test, predictions)
+        mae = mean_absolute_error(y_test, predictions)
+        return mse, mae
+    except Exception as e:
+        logger.error(f"Error in backtest_model: {str(e)}")
+        return None, None
 
 
 async def compare_models(stock_code):
-    models = await train_and_save_models(stock_code)
-    if models is None:
+    try:
+        models = await train_and_save_models(stock_code)
+        if models is None:
+            logger.error(f"Failed to train models for {stock_code}")
+            return None
+
+        historical_data = await fetch_historical_data(stock_code, '5years')
+        if historical_data is None:
+            logger.error(f"Failed to fetch historical data for {stock_code}")
+            return None
+
+        close_prices = historical_data['close'].values
+        X, y = prepare_data(close_prices)
+        _, X_test, _, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        results = {}
+        for name, model in models.items():
+            if model is not None:
+                mse, mae = backtest_model(model, X_test, y_test, historical_data)
+                if mse is not None and mae is not None:
+                    results[name] = {'MSE': mse, 'MAE': mae}
+                else:
+                    logger.warning(f"Backtesting failed for {name} model")
+
+        if not results:
+            logger.error(f"No valid results for any model for {stock_code}")
+            return None
+
+        # Sort models by MSE
+        sorted_results = sorted(results.items(), key=lambda x: x[1]['MSE'])
+
+        logger.info(f"Model comparison for {stock_code}:")
+        for name, metrics in sorted_results:
+            logger.info(f"{name}: MSE = {metrics['MSE']:.4f}, MAE = {metrics['MAE']:.4f}")
+
+        best_model = sorted_results[0][0]
+        logger.info(f"Best performing model for {stock_code}: {best_model}")
+
+        return results
+    except Exception as e:
+        logger.error(f"Error in compare_models for {stock_code}: {str(e)}")
         return None
-
-    historical_data = await fetch_historical_data(stock_code, '5years')
-    close_prices = historical_data['close'].values
-    X, y = prepare_data(close_prices)
-    _, X_test, _, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    results = {}
-    for name, model in models.items():
-        if model is not None:
-            mse, mae = backtest_model(model, X_test, y_test, historical_data)
-            results[name] = {'MSE': mse, 'MAE': mae}
-
-    # Sort models by MSE
-    sorted_results = sorted(results.items(), key=lambda x: x[1]['MSE'])
-
-    print(f"Model comparison for {stock_code}:")
-    for name, metrics in sorted_results:
-        print(f"{name}: MSE = {metrics['MSE']:.4f}, MAE = {metrics['MAE']:.4f}")
-
-    best_model = sorted_results[0][0]
-    print(f"Best performing model for {stock_code}: {best_model}")
-
-    return results
 
 
 if __name__ == "__main__":

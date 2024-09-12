@@ -1,8 +1,9 @@
 import numpy as np
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import GRU, Dense, Dropout
 from tensorflow.keras.optimizers import Adam
 import joblib
+
 
 class GRUModel:
     def __init__(self, input_shape, units=50, dropout=0.2, learning_rate=0.001):
