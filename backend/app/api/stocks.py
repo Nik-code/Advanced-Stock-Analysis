@@ -3,12 +3,17 @@ from app.services.data_collection import fetch_historical_data, fetch_news_data
 from app.services.zerodha_service import ZerodhaService
 from app.services.technical_indicators import calculate_sma, calculate_ema, calculate_rsi, calculate_macd, calculate_bollinger_bands, calculate_atr
 from app.models.backtesting import backtest_lstm_model, backtest_arima_model
+from app.services.llm_integration import GPT4Processor
 import logging
+import os
+import joblib
+import numpy as np
+from app.models.lstm_model import LSTMStockPredictor
 
 router = APIRouter()
 zerodha_service = ZerodhaService()
 logger = logging.getLogger(__name__)
-
+llm_processor = GPT4Processor()
 
 @router.get("/quote")
 async def get_quote(instruments: str):
@@ -20,7 +25,6 @@ async def get_quote(instruments: str):
     except Exception as e:
         logger.error(f"Error fetching quote for {instruments}: {str(e)}")
         raise HTTPException(status_code=500, detail="Error fetching quote")
-
 
 @router.get("/live/{stock_code}")
 async def get_live_stock_data(stock_code: str):
@@ -36,7 +40,6 @@ async def get_live_stock_data(stock_code: str):
         logger.error(f"Error fetching live data for {stock_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/historical/{stock_code}")
 async def get_historical_stock_data(stock_code: str, timeframe: str = '1year'):
     try:
@@ -48,7 +51,6 @@ async def get_historical_stock_data(stock_code: str, timeframe: str = '1year'):
         logger.error(f"Error fetching historical data for {stock_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/news/{stock_code}")
 async def get_stock_news(stock_code: str):
     try:
@@ -58,49 +60,100 @@ async def get_stock_news(stock_code: str):
         logger.error(f"Error fetching news for {stock_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-@router.get("/{symbol}/indicators")
-async def get_technical_indicators(symbol: str, timeFrame: str = '1year'):
+@router.get("/predict/{stock_code}")
+async def predict_stock(stock_code: str):
     try:
-        historical_data = await fetch_historical_data(symbol, timeFrame)
-        if historical_data is None:
-            raise HTTPException(status_code=404, detail=f"No data found for stock symbol {symbol}")
+        logger.info(f"Received prediction request for {stock_code}")
+        model_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'models')
+        lstm_model_path = os.path.join(model_dir, f'{stock_code}_lstm_model.h5')
+        scaler_path = os.path.join(model_dir, f'{stock_code}_scaler.pkl')
+        arima_model_path = os.path.join(model_dir, f'{stock_code}_arima_model.pkl')
 
-        sma_20 = calculate_sma(historical_data['close'], 20)
-        ema_50 = calculate_ema(historical_data['close'], 50)
-        rsi_14 = calculate_rsi(historical_data['close'], 14)
-        macd, signal, _ = calculate_macd(historical_data['close'])
-        upper, middle, lower = calculate_bollinger_bands(historical_data['close'])
-        atr = calculate_atr(historical_data['high'], historical_data['low'], historical_data['close'], 14)
+        if not os.path.exists(lstm_model_path) or not os.path.exists(scaler_path) or not os.path.exists(arima_model_path):
+            logger.error(f"Models or scaler not found for {stock_code}")
+            raise HTTPException(status_code=404, detail=f"Models not found for {stock_code}")
+
+        lstm_predictor = LSTMStockPredictor(input_shape=(60, 1))
+        lstm_predictor.load_model(lstm_model_path)
+        scaler = joblib.load(scaler_path)
+        arima_predictor = joblib.load(arima_model_path)
+
+        # Fetch historical data
+        historical_data = await fetch_historical_data(stock_code, '1year')
+        if historical_data is None:
+            raise HTTPException(status_code=404, detail=f"No historical data found for {stock_code}")
+
+        close_prices = historical_data['close'].values.reshape(-1, 1)
+        scaled_data = scaler.transform(close_prices)
+
+        # Generate past predictions for LSTM
+        lstm_past_predictions = []
+        for i in range(60, len(scaled_data)):
+            X = scaled_data[i-60:i].reshape(1, 60, 1)
+            prediction = lstm_predictor.predict(X)
+            lstm_past_predictions.append(prediction[0][0])
+
+        lstm_past_predictions = scaler.inverse_transform(np.array(lstm_past_predictions).reshape(-1, 1))
+
+        # Generate future predictions for LSTM
+        lstm_future_predictions = []
+        last_sequence = scaled_data[-60:].reshape(1, 60, 1)
+        for _ in range(7):  # Predict next 7 days
+            prediction = lstm_predictor.predict(last_sequence)
+            lstm_future_predictions.append(prediction[0][0])
+            last_sequence = np.roll(last_sequence, -1, axis=1)
+            last_sequence[0, -1, 0] = prediction[0][0]
+
+        lstm_future_predictions = scaler.inverse_transform(np.array(lstm_future_predictions).reshape(-1, 1))
+
+        # Generate predictions for ARIMA
+        arima_past_predictions = arima_predictor.predict(len(close_prices) - 60)
+        arima_future_predictions = arima_predictor.predict(7)
+
+        logger.info(f"Successfully generated predictions for {stock_code}")
 
         return {
-            "sma_20": sma_20.tolist(),
-            "ema_50": ema_50.tolist(),
-            "rsi_14": rsi_14.tolist(),
-            "macd": macd.tolist(),
-            "macd_signal": signal.tolist(),
-            "bollinger_upper": upper.tolist(),
-            "bollinger_middle": middle.tolist(),
-            "bollinger_lower": lower.tolist(),
-            "atr": atr.tolist(),
-            "dates": historical_data['date'].tolist(),
-            "close_prices": historical_data['close'].tolist()
+            "lstm_past_predictions": lstm_past_predictions.flatten().tolist(),
+            "lstm_future_predictions": lstm_future_predictions.flatten().tolist(),
+            "arima_past_predictions": arima_past_predictions.tolist(),
+            "arima_future_predictions": arima_future_predictions.tolist()
         }
     except Exception as e:
-        logger.error(f"Error calculating technical indicators for {symbol}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error making prediction for {stock_code}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error making prediction for {stock_code}: {str(e)}")
 
-
-@router.get("/{symbol}/realtime")
-async def get_realtime_data(symbol: str):
+@router.get("/analysis/{stock_code}")
+async def get_stock_analysis(stock_code: str):
     try:
-        instrument_token = zerodha_service.get_instrument_token("BSE", symbol)
-        if not instrument_token:
-            raise HTTPException(status_code=404, detail=f"No instrument token found for stock symbol {symbol}")
-        realtime_data = zerodha_service.get_quote([instrument_token])
-        if realtime_data is None or str(instrument_token) not in realtime_data:
-            raise HTTPException(status_code=404, detail=f"No real-time data found for stock symbol {symbol}")
-        return realtime_data[str(instrument_token)]
+        historical_data = await fetch_historical_data(stock_code, '1year')
+        news_data = await fetch_news_data(stock_code)
+        lstm_prediction = await predict_stock(stock_code)
+        arima_prediction = lstm_prediction  # We're using the same prediction endpoint for both LSTM and ARIMA
+
+        analysis = await llm_processor.analyze_stock(
+            stock_code,
+            historical_data,
+            news_data,
+            lstm_prediction,
+            arima_prediction
+        )
+
+        return analysis
     except Exception as e:
-        logger.error(f"Error fetching real-time data for {symbol}: {str(e)}")
+        logger.error(f"Error generating analysis for {stock_code}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/top_stocks")
+async def get_top_stocks():
+    try:
+        # Implement logic to analyze all stocks and return top picks
+        top_stocks = await analyze_all_stocks()
+        return {"top_stocks": top_stocks}
+    except Exception as e:
+        logger.error(f"Error getting top stocks: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def analyze_all_stocks():
+    # Implement the logic to analyze all stocks and return top picks
+    # This is a placeholder implementation
+    return ["RELIANCE", "TCS", "HDFCBANK"]  # Replace with actual analysis logic
