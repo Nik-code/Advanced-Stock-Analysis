@@ -2,40 +2,43 @@ import numpy as np
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import GRU, Dense, Dropout
 from tensorflow.keras.optimizers import Adam
-from sklearn.preprocessing import MinMaxScaler
-
+import joblib
 
 class GRUModel:
-    def __init__(self, input_shape):
-        self.model = Sequential([
-            GRU(units=50, return_sequences=True, input_shape=input_shape),
-            Dropout(0.2),
-            GRU(units=50, return_sequences=False),
-            Dropout(0.2),
+    def __init__(self, input_shape, units=50, dropout=0.2, learning_rate=0.001):
+        self.input_shape = input_shape
+        self.units = units
+        self.dropout = dropout
+        self.learning_rate = learning_rate
+        self.model = self.build_model()
+        self.scaler = None
+
+    def build_model(self):
+        model = Sequential([
+            GRU(units=self.units, return_sequences=True, input_shape=self.input_shape),
+            Dropout(self.dropout),
+            GRU(units=self.units, return_sequences=False),
+            Dropout(self.dropout),
             Dense(units=1)
         ])
-        self.model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error')
-        self.scaler = MinMaxScaler(feature_range=(0, 1))
+        model.compile(optimizer=Adam(learning_rate=self.learning_rate), loss='mean_squared_error')
+        return model
 
-    def prepare_data(self, data, lookback=60):
-        scaled_data = self.scaler.fit_transform(data.reshape(-1, 1))
-        X, y = [], []
-        for i in range(lookback, len(scaled_data)):
-            X.append(scaled_data[i-lookback:i, 0])
-            y.append(scaled_data[i, 0])
-        return np.array(X), np.array(y)
+    def train(self, X_train, y_train, epochs=100, batch_size=32, validation_split=0.1):
+        X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
+        self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=validation_split)
 
-    def train(self, data, epochs=100, batch_size=32):
-        X, y = self.prepare_data(data)
-        self.model.fit(X, y, epochs=epochs, batch_size=batch_size, validation_split=0.1)
+    def predict(self, X):
+        X = np.reshape(X, (X.shape[0], X.shape[1], 1))
+        return self.model.predict(X)
 
-    def predict(self, data, steps=7):
-        X, _ = self.prepare_data(data)
-        last_sequence = X[-1]
-        predictions = []
-        for _ in range(steps):
-            prediction = self.model.predict(last_sequence.reshape(1, -1, 1))
-            predictions.append(prediction[0, 0])
-            last_sequence = np.roll(last_sequence, -1)
-            last_sequence[-1] = prediction[0, 0]
-        return self.scaler.inverse_transform(np.array(predictions).reshape(-1, 1))
+    def save(self, path):
+        self.model.save(f"{path}_model.h5")
+        joblib.dump(self.scaler, f"{path}_scaler.pkl")
+
+    @classmethod
+    def load(cls, path):
+        model = cls(input_shape=(60, 1))  # Adjust input_shape as needed
+        model.model = load_model(f"{path}_model.h5")
+        model.scaler = joblib.load(f"{path}_scaler.pkl")
+        return model

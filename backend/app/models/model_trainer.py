@@ -3,10 +3,10 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-from .lstm_model import LSTMModel
-from .XGBoost import XGBoostModel
-from .GRU import GRUModel
-from .arima_model import ARIMAStockPredictor
+from app.models.lstm_model import LSTMModel
+from app.models.XGBoost import XGBoostModel
+from app.models.GRU import GRUModel
+from app.models.arima_model import ARIMAStockPredictor
 from app.services.data_collection import fetch_historical_data
 import asyncio
 import logging
@@ -70,7 +70,23 @@ def prepare_data(data, lookback=60):
 
 
 def backtest_model(model, X_test, y_test):
-    predictions = model.predict(X_test)
+    if isinstance(model, (LSTMModel, GRUModel)):
+        # For LSTM and GRU models, we need to reshape the input
+        X_test_reshaped = X_test.reshape((X_test.shape[0], 1, X_test.shape[1]))
+        predictions = model.predict(X_test_reshaped).flatten()
+    elif isinstance(model, XGBoostModel):
+        # For XGBoost, we can use X_test directly
+        predictions = model.predict(X_test)
+    elif isinstance(model, ARIMAStockPredictor):
+        # For ARIMA, we need to use the forecast method
+        predictions = model.forecast(steps=len(y_test))
+    else:
+        raise ValueError(f"Unsupported model type: {type(model)}")
+
+    # Ensure predictions and y_test have the same length
+    predictions = predictions[:len(y_test)]
+    y_test = y_test[:len(predictions)]
+
     mse = mean_squared_error(y_test, predictions)
     mae = mean_absolute_error(y_test, predictions)
     return mse, mae

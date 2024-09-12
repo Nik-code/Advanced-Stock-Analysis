@@ -1,6 +1,7 @@
 import xgboost as xgb
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
+import joblib
 
 
 class XGBoostModel:
@@ -30,3 +31,12 @@ class XGBoostModel:
             last_sequence = np.roll(last_sequence, -1)
             last_sequence[-1] = prediction[0]
         return self.scaler.inverse_transform(np.array(predictions).reshape(-1, 1))
+
+    def save(self, path):
+        joblib.dump(self.model, f"{path}.joblib")
+
+    @classmethod
+    def load(cls, path):
+        model = cls()
+        model.model = joblib.load(f"{path}.joblib")
+        return model
