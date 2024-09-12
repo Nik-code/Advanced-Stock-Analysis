@@ -3,14 +3,12 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-from app.models.lstm_model import LSTMModel
 from app.models.XGBoost import XGBoostModel
-from app.models.GRU import GRUModel
 from app.models.arima_model import ARIMAStockPredictor
 from app.services.data_collection import fetch_historical_data
 import asyncio
 import logging
-from app.models.Prophet import ProphetModel
+from app.models.random_forest import RandomForestModel
 
 logger = logging.getLogger(__name__)
 
@@ -26,30 +24,26 @@ async def train_and_save_models(stock_code):
             logger.error(f"Insufficient data for {stock_code}")
             return None
 
-        close_prices = historical_data['close'].values
+        close_prices = historical_data['close']
 
         # Prepare data
-        X, y = prepare_data(close_prices)
+        X, y = prepare_data(close_prices.values)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
         models = {
-            'LSTM': LSTMModel(input_shape=(60, 1)),
             'XGBoost': XGBoostModel(),
-            'GRU': GRUModel(input_shape=(60, 1)),
-            'ARIMA': ARIMAStockPredictor(),
-            'Prophet': ProphetModel()
+            'ARIMA': ARIMAStockPredictor(order=(1, 1, 1)),
+            'RandomForest': RandomForestModel()
         }
 
         for name, model in models.items():
             try:
-                if name in ['LSTM', 'GRU']:
-                    model.train(X_train, y_train)
-                elif name == 'XGBoost':
-                    model.train(close_prices)
+                if name == 'XGBoost':
+                    model.train(close_prices.values)
                 elif name == 'ARIMA':
-                    model.train(close_prices.flatten())
-                elif name == 'Prophet':
-                    model.train(pd.Series(close_prices, index=historical_data.index))
+                    model.train(close_prices.values.flatten())
+                elif name == 'RandomForest':
+                    model.train(X_train, y_train)
 
                 # Save the model
                 save_path = os.path.join(MODEL_SAVE_DIR, f'{stock_code}_{name}_model')
@@ -75,19 +69,12 @@ def prepare_data(data, lookback=60):
 
 def backtest_model(model, X_test, y_test, historical_data=None):
     try:
-        if isinstance(model, (LSTMModel, GRUModel)):
-            X_test_reshaped = X_test.reshape((X_test.shape[0], X_test.shape[1], 1))
-            predictions = model.predict(X_test_reshaped).flatten()
-        elif isinstance(model, XGBoostModel):
+        if isinstance(model, XGBoostModel):
             predictions = model.predict(X_test)
         elif isinstance(model, ARIMAStockPredictor):
             predictions = model.predict(steps=len(y_test))
-        elif isinstance(model, ProphetModel):
-            if historical_data is None:
-                raise ValueError("Historical data is required for Prophet model backtesting")
-            future_dates = pd.date_range(start=historical_data.index[-1] + pd.Timedelta(days=1), periods=len(y_test))
-            forecast = model.predict(steps=len(y_test))
-            predictions = forecast['yhat'].values
+        elif isinstance(model, RandomForestModel):
+            predictions = model.predict(X_test)
         else:
             raise ValueError(f"Unsupported model type: {type(model)}")
 
