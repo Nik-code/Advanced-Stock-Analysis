@@ -2,13 +2,12 @@ from fastapi import APIRouter, HTTPException
 from app.services.data_collection import fetch_historical_data, fetch_news_data
 from app.services.zerodha_service import ZerodhaService
 from app.services.technical_indicators import calculate_sma, calculate_ema, calculate_rsi, calculate_macd, calculate_bollinger_bands, calculate_atr
-from app.models.backtesting import ARIMAStockPredictor, LSTMStockPredictor
+# from app.models.backtesting import ARIMAStockPredictor, LSTMStockPredictor
 from app.services.llm_integration import GPT4Processor
 import logging
 import os
 import joblib
 import numpy as np
-from app.models.lstm_model import LSTMStockPredictor
 
 router = APIRouter()
 zerodha_service = ZerodhaService()

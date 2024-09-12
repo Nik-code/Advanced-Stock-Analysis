@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
@@ -9,7 +8,8 @@ from .model_utils import create_sequences, train_test_split
 
 
 class LSTMModel:
-    def __init__(self, sequence_length=60, units=50, dropout=0.2, learning_rate=0.001):
+    def __init__(self, input_shape, sequence_length=60, units=50, dropout=0.2, learning_rate=0.001):
+        self.input_shape = input_shape
         self.sequence_length = sequence_length
         self.units = units
         self.dropout = dropout
@@ -17,9 +17,9 @@ class LSTMModel:
         self.model = None
         self.scaler = MinMaxScaler(feature_range=(0, 1))
 
-    def build_model(self, input_shape):
+    def build_model(self):
         self.model = Sequential([
-            LSTM(units=self.units, return_sequences=True, input_shape=input_shape),
+            LSTM(units=self.units, return_sequences=True, input_shape=self.input_shape),
             Dropout(self.dropout),
             LSTM(units=self.units, return_sequences=False),
             Dropout(self.dropout),

@@ -12,8 +12,6 @@ from pydantic import BaseModel
 from typing import List
 
 from app.api import stocks
-from app.models.backtesting import backtest_lstm_model, backtest_arima_model
-from app.models.lstm_model import LSTMStockPredictor
 from app.services.data_collection import fetch_historical_data, fetch_news_data
 from app.services.llm_integration import GPT4Processor
 from app.services.technical_indicators import calculate_sma, calculate_ema, calculate_rsi, calculate_macd, calculate_bollinger_bands, calculate_atr
@@ -212,9 +210,9 @@ async def get_top_stocks():
         logger.error(f"Error getting top stocks: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # Scheduled task to run predictions and make trade decisions
 @app.on_event("startup")
-@repeat_every(seconds=60 * 60 * 8)  # Run every 8 hours
 async def run_predictions_and_trades():
     try:
         # Implement logic to run predictions and make trade decisions
