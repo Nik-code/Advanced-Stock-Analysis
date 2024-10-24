@@ -7,6 +7,8 @@ class ARIMAStockPredictor:
     def __init__(self, order=(1, 1, 1)):
         self.order = order
         self.model = None
+        self.mse = None
+        self.mae = None
 
     def train(self, data):
         self.model = ARIMA(data, order=self.order)
@@ -29,3 +31,8 @@ class ARIMAStockPredictor:
     @classmethod
     def load(cls, path):
         return joblib.load(path)
+
+    def calculate_metrics(self, test_data):
+        predictions = self.predict(len(test_data))
+        self.mse = np.mean((test_data - predictions) ** 2)
+        self.mae = np.mean(np.abs(test_data - predictions))

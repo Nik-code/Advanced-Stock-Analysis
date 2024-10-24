@@ -2,17 +2,17 @@ import os
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-from app.models.XGBoost import XGBoostModel
-from app.models.arima_model import ARIMAStockPredictor
-from app.services.data_collection import fetch_historical_data
+from XGBoost import XGBoostModel
+from arima_model import ARIMAStockPredictor
+from ..services.data_collection import fetch_historical_data
 import asyncio
 import logging
-from app.models.random_forest import RandomForestModel
+from .random_forest import RandomForestModel
+from .model_manager import TRAINED_MODELS_DIR
 
 logger = logging.getLogger(__name__)
 
-MODEL_SAVE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'trained_models')
-os.makedirs(MODEL_SAVE_DIR, exist_ok=True)
+os.makedirs(TRAINED_MODELS_DIR, exist_ok=True)
 
 
 async def train_and_save_models(stock_code):
@@ -39,13 +39,20 @@ async def train_and_save_models(stock_code):
             try:
                 if name == 'XGBoost':
                     model.train(close_prices.values)
+                    model.mse = mean_squared_error(close_prices.values[-100:], model.predict(close_prices.values[-160:-60]))
                 elif name == 'ARIMA':
                     model.train(close_prices.values.flatten())
+                    predictions = model.predict(steps=100)
+                    model.mse = mean_squared_error(close_prices.values[-100:], predictions)
                 elif name == 'RandomForest':
                     model.train(X_train, y_train)
+                    y_pred = model.predict(X_test)
+                    model.mse = mean_squared_error(y_test, y_pred)
+                    model.mae = mean_absolute_error(y_test, y_pred)
 
                 # Save the model
-                save_path = os.path.join(MODEL_SAVE_DIR, f'{stock_code}_{name}_model')
+                save_path = os.path.join(TRAINED_MODELS_DIR, stock_code, f'{name}_model.pkl')
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
                 model.save(save_path)
                 logger.info(f"Saved {name} model for {stock_code}")
             except Exception as e:

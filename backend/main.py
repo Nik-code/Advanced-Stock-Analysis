@@ -120,10 +120,10 @@ async def get_quote(instruments: str):
 async def predict_stock(stock_code: str):
     try:
         logger.info(f"Received prediction request for {stock_code}")
-        model_dir = os.path.join(os.path.dirname(__file__), 'models')
-        lstm_model_path = os.path.join(model_dir, f'{stock_code}_lstm_model.h5')
-        scaler_path = os.path.join(model_dir, f'{stock_code}_scaler.pkl')
-        arima_model_path = os.path.join(model_dir, f'{stock_code}_arima_model.pkl')
+        model_dir = os.path.join(os.path.dirname(__file__), '..', 'trained_models', stock_code)
+        lstm_model_path = os.path.join(model_dir, 'LSTM_model.pkl')
+        scaler_path = os.path.join(model_dir, 'scaler.pkl')
+        arima_model_path = os.path.join(model_dir, 'ARIMA_model.pkl')
 
         if not os.path.exists(lstm_model_path) or not os.path.exists(scaler_path) or not os.path.exists(arima_model_path):
             logger.error(f"Models or scaler not found for {stock_code}")
